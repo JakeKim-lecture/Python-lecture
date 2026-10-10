@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Session 1 — Hello, Python</title>
+<title>Session 2 — Data Types & Numbers</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
@@ -33,333 +33,108 @@
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-  font-family: var(--sans);
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-}
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
 
-/* ── Loading overlay ─────────────────────────────────────── */
 #loading {
-  position: fixed; inset: 0;
-  background: var(--navy);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  z-index: 999;
-  gap: 20px;
-  transition: opacity .5s;
+  position: fixed; inset: 0; background: var(--navy);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 999; gap: 20px; transition: opacity .5s;
 }
-#loading h2 {
-  font-family: var(--serif);
-  color: #fff;
-  font-size: 1.6rem;
-  font-weight: 400;
-}
-#loading p { color: #8899bb; font-size: .9rem; }
+#loading h2 { font-family: var(--serif); color: #fff; font-size: 1.6rem; font-weight: 400; }
+#loading p  { color: #8899bb; font-size: .9rem; }
 .spinner {
-  width: 44px; height: 44px;
-  border: 3px solid #2a3f6a;
-  border-top-color: var(--amber);
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
+  width: 44px; height: 44px; border: 3px solid #2a3f6a;
+  border-top-color: var(--amber); border-radius: 50%; animation: spin .8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Header ─────────────────────────────────────────────── */
 header {
-  background: var(--navy);
-  color: #fff;
-  padding: 28px 40px 24px;
-  position: sticky; top: 0; z-index: 10;
-  box-shadow: 0 2px 16px rgba(0,0,0,.18);
+  background: var(--navy); color: #fff; padding: 28px 40px 24px;
+  position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 16px rgba(0,0,0,.18);
 }
-.header-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-header h1 {
-  font-family: var(--serif);
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -.01em;
-}
+.header-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+header h1  { font-family: var(--serif); font-size: 1.5rem; font-weight: 600; letter-spacing: -.01em; }
 header h1 span { color: var(--amber); }
-.badge {
-  font-size: .75rem;
-  background: rgba(255,255,255,.1);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-family: var(--mono);
-}
-.progress-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.progress-bar {
-  flex: 1;
-  height: 6px;
-  background: rgba(255,255,255,.15);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--teal), #4ecca3);
-  border-radius: 10px;
-  transition: width .5s cubic-bezier(.4,0,.2,1);
-  width: 0%;
-}
-.progress-label {
-  font-size: .8rem;
-  color: #8899bb;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  min-width: 52px;
-  text-align: right;
-}
+.badge { font-size: .75rem; background: rgba(255,255,255,.1); padding: 4px 12px; border-radius: 20px; font-family: var(--mono); }
+.progress-row { display: flex; align-items: center; gap: 14px; }
+.progress-bar { flex: 1; height: 6px; background: rgba(255,255,255,.15); border-radius: 10px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--teal), #4ecca3); border-radius: 10px; transition: width .5s cubic-bezier(.4,0,.2,1); width: 0%; }
+.progress-label { font-size: .8rem; color: #8899bb; white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
 
-/* ── Main layout ─────────────────────────────────────────── */
-main {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 36px 24px 80px;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
+main { max-width: 860px; margin: 0 auto; padding: 36px 24px 80px; display: flex; flex-direction: column; gap: 28px; }
 
-/* ── Question card ───────────────────────────────────────── */
 .card {
-  background: var(--card);
-  border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.07);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  animation: fadeUp .4s ease both;
+  background: var(--card); border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07); border: 1px solid var(--border);
+  overflow: hidden; animation: fadeUp .4s ease both;
 }
-@keyframes fadeUp {
-  from { opacity:0; transform: translateY(12px); }
-  to   { opacity:1; transform: translateY(0); }
-}
-.card:nth-child(1) { animation-delay:.05s }
-.card:nth-child(2) { animation-delay:.10s }
-.card:nth-child(3) { animation-delay:.15s }
-.card:nth-child(4) { animation-delay:.20s }
-.card:nth-child(5) { animation-delay:.25s }
-.card:nth-child(6) { animation-delay:.30s }
-.card:nth-child(7) { animation-delay:.35s }
-
+@keyframes fadeUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+.card:nth-child(1){animation-delay:.05s}.card:nth-child(2){animation-delay:.10s}
+.card:nth-child(3){animation-delay:.15s}.card:nth-child(4){animation-delay:.20s}
+.card:nth-child(5){animation-delay:.25s}.card:nth-child(6){animation-delay:.30s}
+.card:nth-child(7){animation-delay:.35s}
 .card.challenge { border-color: var(--amber); }
 
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--border);
-  background: #fdfcfa;
-}
-.qnum {
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  background: var(--navy);
-  color: #fff;
-  font-family: var(--mono);
-  font-size: .8rem;
-  font-weight: 500;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.card.challenge .qnum {
-  background: var(--amber);
-}
-.card-header h2 {
-  font-family: var(--serif);
-  font-size: 1.05rem;
-  font-weight: 600;
-  flex: 1;
-}
-.status-dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: #d8d5ce;
-  transition: background .3s;
-}
+.card-header { display: flex; align-items: center; gap: 14px; padding: 18px 24px; border-bottom: 1px solid var(--border); background: #fdfcfa; }
+.qnum { width: 34px; height: 34px; border-radius: 50%; background: var(--navy); color: #fff; font-family: var(--mono); font-size: .8rem; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.card.challenge .qnum { background: var(--amber); }
+.card-header h2 { font-family: var(--serif); font-size: 1.05rem; font-weight: 600; flex: 1; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; background: #d8d5ce; transition: background .3s; }
 .status-dot.pass { background: var(--pass); }
 .status-dot.fail { background: var(--fail); }
 
 .card-body { padding: 20px 24px; }
+.instructions { font-size: .93rem; line-height: 1.7; color: #3a3a4a; margin-bottom: 16px; }
+.instructions code { font-family: var(--mono); font-size: .85rem; background: #f0ede6; padding: 1px 6px; border-radius: 4px; color: var(--teal); }
+.instructions strong { color: var(--navy); }
 
-.instructions {
-  font-size: .93rem;
-  line-height: 1.7;
-  color: #3a3a4a;
-  margin-bottom: 16px;
-}
-.instructions code {
-  font-family: var(--mono);
-  font-size: .85rem;
-  background: #f0ede6;
-  padding: 1px 6px;
-  border-radius: 4px;
-  color: var(--teal);
-}
-.expected-box {
-  background: var(--code-bg);
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 16px;
-  font-family: var(--mono);
-  font-size: .82rem;
-  color: #f8f8f2;
-  line-height: 1.6;
-}
-.expected-box .label {
-  color: #6272a4;
-  font-size: .72rem;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  margin-bottom: 6px;
-}
+.expected-box { background: var(--code-bg); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-family: var(--mono); font-size: .82rem; color: #f8f8f2; line-height: 1.6; }
+.expected-box .label { color: #6272a4; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
 
-/* ── CodeMirror overrides ────────────────────────────────── */
-.CodeMirror {
-  border-radius: 8px;
-  font-family: var(--mono) !important;
-  font-size: 13.5px !important;
-  line-height: 1.65 !important;
-  height: auto;
-  min-height: 80px;
-}
+.tip-box { background: var(--teal-lt); border-left: 3px solid var(--teal); border-radius: 0 8px 8px 0; padding: 10px 14px; margin-bottom: 16px; font-size: .86rem; color: #1a4a40; line-height: 1.6; }
+.tip-box code { font-family: var(--mono); font-size: .82rem; background: rgba(42,127,111,.15); padding: 1px 5px; border-radius: 3px; }
+
+.CodeMirror { border-radius: 8px; font-family: var(--mono) !important; font-size: 13.5px !important; line-height: 1.65 !important; height: auto; min-height: 80px; }
 .CodeMirror-scroll { min-height: 80px; }
 
-/* ── Buttons ─────────────────────────────────────────────── */
-.btn-row {
-  display: flex;
-  gap: 10px;
-  margin-top: 12px;
-}
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 18px;
-  border-radius: 8px;
-  border: none;
-  font-family: var(--sans);
-  font-size: .85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all .15s;
-}
+.btn-row { display: flex; gap: 10px; margin-top: 12px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 8px; border: none; font-family: var(--sans); font-size: .85rem; font-weight: 600; cursor: pointer; transition: all .15s; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
-.btn-run {
-  background: var(--navy);
-  color: #fff;
-}
-.btn-run:hover:not(:disabled) { background: #263a60; }
-.btn-check {
-  background: var(--teal);
-  color: #fff;
-}
+.btn-run   { background: var(--navy); color: #fff; }
+.btn-run:hover:not(:disabled)   { background: #263a60; }
+.btn-check { background: var(--teal); color: #fff; }
 .btn-check:hover:not(:disabled) { background: #236958; }
-.btn-reset {
-  background: transparent;
-  color: var(--muted);
-  border: 1px solid var(--border);
-  margin-left: auto;
-}
+.btn-reset { background: transparent; color: var(--muted); border: 1px solid var(--border); margin-left: auto; }
 .btn-reset:hover { color: var(--text); border-color: #aaa; }
 
-/* ── Output panel ────────────────────────────────────────── */
-.output-panel {
-  margin-top: 14px;
-  background: var(--code-bg);
-  border-radius: 8px;
-  overflow: hidden;
-  display: none;
-}
+.output-panel { margin-top: 14px; background: var(--code-bg); border-radius: 8px; overflow: hidden; display: none; }
 .output-panel.visible { display: block; }
-.output-label {
-  padding: 6px 14px;
-  font-family: var(--mono);
-  font-size: .7rem;
-  color: #6272a4;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  border-bottom: 1px solid rgba(255,255,255,.05);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.output-text {
-  padding: 12px 16px;
-  font-family: var(--mono);
-  font-size: .84rem;
-  color: #f8f8f2;
-  white-space: pre-wrap;
-  line-height: 1.65;
-  min-height: 36px;
-}
+.output-label { padding: 6px 14px; font-family: var(--mono); font-size: .7rem; color: #6272a4; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid rgba(255,255,255,.05); display: flex; justify-content: space-between; align-items: center; }
+.output-text { padding: 12px 16px; font-family: var(--mono); font-size: .84rem; color: #f8f8f2; white-space: pre-wrap; line-height: 1.65; min-height: 36px; }
 .output-text.error { color: #ff5555; }
 
-/* ── Result panel ────────────────────────────────────────── */
-.result-panel {
-  margin-top: 10px;
-  border-radius: 8px;
-  padding: 12px 16px;
-  display: none;
-  font-size: .88rem;
-  line-height: 1.6;
-}
+.result-panel { margin-top: 10px; border-radius: 8px; padding: 12px 16px; display: none; font-size: .88rem; line-height: 1.6; }
 .result-panel.visible { display: block; }
-.result-panel.pass {
-  background: var(--pass-bg);
-  border: 1px solid #b7e4cc;
-  color: var(--pass);
-}
-.result-panel.fail {
-  background: var(--fail-bg);
-  border: 1px solid #f5c0bb;
-  color: var(--fail);
-}
-.result-title {
-  font-weight: 600;
-  font-size: .95rem;
-  margin-bottom: 4px;
-}
-.diff-row {
-  font-family: var(--mono);
-  font-size: .8rem;
-  margin-top: 6px;
-}
-.diff-row span {
-  display: inline-block;
-  padding: 1px 6px;
-  border-radius: 3px;
-  margin: 1px 0;
-}
+.result-panel.pass { background: var(--pass-bg); border: 1px solid #b7e4cc; color: var(--pass); }
+.result-panel.fail { background: var(--fail-bg); border: 1px solid #f5c0bb; color: var(--fail); }
+.result-title { font-weight: 600; font-size: .95rem; margin-bottom: 4px; }
+.diff-row { font-family: var(--mono); font-size: .8rem; margin-top: 6px; }
+.diff-row span { display: inline-block; padding: 1px 6px; border-radius: 3px; margin: 1px 0; }
 .diff-got      { background: #fce8e6; color: #c0392b; }
 .diff-expected { background: #e6f4ea; color: #1f7a55; }
 </style>
 </head>
 <body>
 
-<!-- Loading -->
 <div id="loading">
   <div class="spinner"></div>
   <h2>Setting up Python…</h2>
   <p>Loading Pyodide runtime — just a moment</p>
 </div>
 
-<!-- Header -->
 <header>
   <div class="header-top">
-    <h1>Session 1 — <span>Hello, Python</span></h1>
+    <h1>Session 2 — <span>Data Types &amp; Numbers</span></h1>
     <span class="badge">7 questions</span>
   </div>
   <div class="progress-row">
@@ -371,97 +146,96 @@ main {
 <main id="main"></main>
 
 <script>
-// ── Question definitions ─────────────────────────────────────────────────────
 const QUESTIONS = [
   {
     id: 1,
-    title: "Hello, World!",
-    instructions: `Use <code>print()</code> to display exactly the text below.`,
-    expected: ["Hello, World!"],
-    starter: `# Write your print() statement below\n`,
+    title: "What Type Is It?",
+    instructions: `Python has four basic data types you'll use constantly: <code>int</code>, <code>float</code>, <code>str</code>, and <code>bool</code>.\n\nUse <code>print(type(...))</code> on each of the four values below — one <code>print()</code> per line.`,
+    tip: `<code>type(42)</code> returns <code>&lt;class 'int'&gt;</code> — just pass it straight into <code>print()</code>!`,
+    expected: ["&lt;class 'int'&gt;", "&lt;class 'float'&gt;", "&lt;class 'str'&gt;", "&lt;class 'bool'&gt;"],
+    starter: `# Print the type of each value below\nprint(type(42))\n# your turn:\n\n\n`,
     check(lines) {
-      if (lines[0] === "Hello, World!") return ok();
-      return fail([{ got: lines[0] ?? "(nothing)", exp: "Hello, World!" }]);
+      const exp = ["<class 'int'>", "<class 'float'>", "<class 'str'>", "<class 'bool'>"];
+      const diffs = exp.map((e,i) => lines[i] !== e ? {got: lines[i] ?? "(missing)", exp: e} : null).filter(Boolean);
+      return diffs.length === 0 ? ok() : fail(diffs);
     }
   },
   {
     id: 2,
-    title: "Personalised Greeting",
-    instructions: `Store your name in a variable called <code>name</code>, then print a greeting.\n\nThe output should look like: <code>Hello, Alice!</code> (using your own name)`,
-    expected: ["Hello, &lt;your name&gt;!"],
-    starter: `name = "Alice"   # ← change to your name\n\n# Print: Hello, <name>!\n`,
+    title: "Integer Arithmetic",
+    instructions: `<code>a = 17</code> and <code>b = 5</code> are given.\n\nPrint the result of <strong>three operations</strong>, each on its own line:\n<code>a + b</code> &nbsp; <code>a - b</code> &nbsp; <code>a * b</code>`,
+    tip: null,
+    expected: ["22", "12", "85"],
+    starter: `a = 17\nb = 5\n\n# Print a+b, a-b, and a*b on separate lines\n`,
     check(lines) {
-      const l = lines[0] ?? "";
-      if (l.startsWith("Hello, ") && l.endsWith("!") && l.length > 8)
-        return ok("Looks great!");
-      return fail([{ got: l, exp: 'Hello, <your name>!  (must start with "Hello, " and end with "!")' }]);
+      const exp = ["22", "12", "85"];
+      const diffs = exp.map((e,i) => lines[i] !== e ? {got: lines[i] ?? "(missing)", exp: e} : null).filter(Boolean);
+      return diffs.length === 0 ? ok() : fail(diffs);
     }
   },
   {
     id: 3,
-    title: "Two-line Introduction",
-    instructions: `Use <strong>two</strong> <code>print()</code> calls to produce two lines.\n\nLine 1: <code>My name is Jake.</code>\nLine 2: <code>I am 20 years old.</code>\n\n(You can change the name and age — the format is what matters!)`,
-    expected: ["My name is &lt;name&gt;.", "I am &lt;age&gt; years old."],
-    starter: `name = "Jake"\nage  = 20\n\n# Write two print() statements\n`,
+    title: "Three Kinds of Division",
+    instructions: `Python has three division operators — they all divide, but give different results!\n\n<code>a = 17</code>, <code>b = 5</code>. Print each result on its own line:\n<code>a / b</code> → regular division (float)\n<code>a // b</code> → floor division (drops decimal)\n<code>a % b</code> → modulo (remainder only)`,
+    tip: `<code>//</code> keeps only the whole part. <code>%</code> keeps only the remainder.`,
+    expected: ["3.4", "3", "2"],
+    starter: `a = 17\nb = 5\n\n# Print: a/b, a//b, a%b\n`,
     check(lines) {
-      const diffs = [];
-      const l1 = lines[0] ?? "", l2 = lines[1] ?? "";
-      if (!l1.startsWith("My name is ") || !l1.endsWith("."))
-        diffs.push({ got: l1, exp: 'My name is <name>.  (must start with "My name is " and end with ".")' });
-      if (!l2.startsWith("I am ") || !l2.endsWith(" years old."))
-        diffs.push({ got: l2, exp: 'I am <age> years old.' });
-      if (lines.length < 2 && diffs.length === 0)
-        diffs.push({ got: "(only 1 line)", exp: "Need 2 lines" });
+      const exp = ["3.4", "3", "2"];
+      const diffs = exp.map((e,i) => lines[i] !== e ? {got: lines[i] ?? "(missing)", exp: e} : null).filter(Boolean);
       return diffs.length === 0 ? ok() : fail(diffs);
     }
   },
   {
     id: 4,
-    title: "Sum of Two Numbers",
-    instructions: `<code>a = 15</code> and <code>b = 27</code> are given.\n\nCalculate their sum and print it in this exact format:`,
-    expected: ["15 + 27 = 42"],
-    starter: `a = 15\nb = 27\n\n# Print: 15 + 27 = 42\n`,
+    title: "Casting: String → Int",
+    instructions: `<code>age_str = "23"</code> is a <strong>string</strong>, not a number — you can't do math with it yet!\n\nCast it to an integer using <code>int()</code>, add <code>7</code> to it, then print the result.`,
+    tip: `<code>int("23")</code> turns the string <code>"23"</code> into the number <code>23</code>.`,
+    expected: ["30"],
+    starter: `age_str = "23"\n\n# Cast to int, add 7, then print\n`,
     check(lines) {
-      if (lines[0] === "15 + 27 = 42") return ok();
-      return fail([{ got: lines[0] ?? "(nothing)", exp: "15 + 27 = 42" }]);
+      if (lines[0] === "30") return ok();
+      return fail([{got: lines[0] ?? "(nothing)", exp: "30"}]);
     }
   },
   {
     id: 5,
-    title: "Rectangle Info",
-    instructions: `<code>width = 6</code> and <code>height = 9</code> are given.\n\nPrint <strong>two lines</strong> — area first, then perimeter:\n\n<strong>Formula:</strong> area = width × height,  perimeter = 2 × (width + height)`,
-    expected: ["Area: 54", "Perimeter: 30"],
-    starter: `width  = 6\nheight = 9\n\n# Print two lines: Area and Perimeter\n`,
+    title: "Casting: Float ↔ Int",
+    instructions: `Two values are given. Print two lines:\n\nLine 1: cast <code>price = 9.99</code> to <code>int</code> and print it\nLine 2: cast <code>score = 87</code> to <code>float</code> and print it\n\nNotice what happens to the decimal!`,
+    tip: `<code>int(9.99)</code> does <strong>not</strong> round — it simply drops everything after the decimal point.`,
+    expected: ["9", "87.0"],
+    starter: `price = 9.99\nscore = 87\n\n# Line 1: print int(price)\n# Line 2: print float(score)\n`,
     check(lines) {
       const diffs = [];
-      if (lines[0] !== "Area: 54")      diffs.push({ got: lines[0] ?? "(nothing)", exp: "Area: 54" });
-      if (lines[1] !== "Perimeter: 30") diffs.push({ got: lines[1] ?? "(nothing)", exp: "Perimeter: 30" });
+      if (lines[0] !== "9")    diffs.push({got: lines[0] ?? "(missing)", exp: "9"});
+      if (lines[1] !== "87.0") diffs.push({got: lines[1] ?? "(missing)", exp: "87.0"});
       return diffs.length === 0 ? ok() : fail(diffs);
     }
   },
   {
     id: 6,
-    title: "Swap Two Variables",
-    instructions: `<code>x = 10</code> and <code>y = 25</code> are given.\n\nSwap their values, then print both on separate lines.\n\n<em>Hint: try <code>x, y = y, x</code></em>`,
-    expected: ["x = 25", "y = 10"],
-    starter: `x = 10\ny = 25\n\n# Swap x and y, then print both\n`,
+    title: "Boolean Results",
+    instructions: `Comparisons in Python return <code>True</code> or <code>False</code> — these are called <strong>booleans</strong>.\n\n<code>x = 10</code>, <code>y = 3</code>. Print the result of these three comparisons on separate lines:\n<code>x &gt; y</code> &nbsp; <code>x == y</code> &nbsp; <code>x != y</code>`,
+    tip: `<code>==</code> checks equality. <code>!=</code> means "not equal". Python capitalises <code>True</code> and <code>False</code>.`,
+    expected: ["True", "False", "True"],
+    starter: `x = 10\ny = 3\n\n# Print x > y, x == y, x != y\n`,
     check(lines) {
-      const diffs = [];
-      if (lines[0] !== "x = 25") diffs.push({ got: lines[0] ?? "(nothing)", exp: "x = 25" });
-      if (lines[1] !== "y = 10") diffs.push({ got: lines[1] ?? "(nothing)", exp: "y = 10" });
+      const exp = ["True", "False", "True"];
+      const diffs = exp.map((e,i) => lines[i] !== e ? {got: lines[i] ?? "(missing)", exp: e} : null).filter(Boolean);
       return diffs.length === 0 ? ok() : fail(diffs);
     }
   },
   {
     id: "C",
-    title: "⭐ Challenge — Shopping Receipt",
-    instructions: `The three items below are given. Print a 3-line receipt where each line follows this format: <code>Item: $price</code>`,
-    expected: ["Apple: $1.5", "Bread: $2.99", "Milk: $3.0"],
-    starter: `item1, price1 = "Apple", 1.5\nitem2, price2 = "Bread", 2.99\nitem3, price3 = "Milk",  3.0\n\n# Print three lines\n`,
+    title: "⭐ Challenge — Number Profile",
+    instructions: `<code>n = 256</code> is given. Print <strong>four lines</strong> that describe it completely:\n\nLine 1: its type → <code>&lt;class 'int'&gt;</code>\nLine 2: its float version → <code>256.0</code>\nLine 3: <code>n</code> squared → <code>65536</code>\nLine 4: whether it is greater than 100 → <code>True</code>`,
+    tip: null,
+    expected: ["&lt;class 'int'&gt;", "256.0", "65536", "True"],
+    starter: `n = 256\n\n# Print four lines about n\n`,
     isChallenge: true,
     check(lines) {
-      const exp = ["Apple: $1.5", "Bread: $2.99", "Milk: $3.0"];
-      const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(nothing)", exp: e } : null).filter(Boolean);
+      const exp = ["<class 'int'>", "256.0", "65536", "True"];
+      const diffs = exp.map((e,i) => lines[i] !== e ? {got: lines[i] ?? "(missing)", exp: e} : null).filter(Boolean);
       return diffs.length === 0 ? ok() : fail(diffs);
     }
   }
@@ -470,12 +244,10 @@ const QUESTIONS = [
 function ok(msg = "All lines match!") { return { pass: true, msg }; }
 function fail(diffs) { return { pass: false, diffs }; }
 
-// ── State ────────────────────────────────────────────────────────────────────
 let pyodide = null;
 const editors = {};
 const passed  = new Set();
 
-// ── Build UI ─────────────────────────────────────────────────────────────────
 function buildUI() {
   const main = document.getElementById("main");
   QUESTIONS.forEach((q, idx) => {
@@ -484,6 +256,11 @@ function buildUI() {
     card.className = "card" + (q.isChallenge ? " challenge" : "");
     card.id = `card-${q.id}`;
     card.style.animationDelay = `${idx * 0.06}s`;
+
+    const tipHtml = q.tip
+      ? `<div class="tip-box">💡 ${q.tip}</div>`
+      : "";
+
     card.innerHTML = `
       <div class="card-header">
         <div class="qnum">${q.id}</div>
@@ -491,7 +268,8 @@ function buildUI() {
         <div class="status-dot" id="dot-${q.id}"></div>
       </div>
       <div class="card-body">
-        <p class="instructions">${q.instructions.replace(/\n/g, "<br>")}</p>
+        <p class="instructions">${q.instructions.replace(/\n/g,"<br>")}</p>
+        ${tipHtml}
         <div class="expected-box">
           <div class="label">Expected output</div>
           <div id="exp-${q.id}">${expHtml}</div>
@@ -513,21 +291,16 @@ function buildUI() {
       </div>`;
     main.appendChild(card);
 
-    // Init CodeMirror
-    const ta = document.getElementById(`editor-${q.id}`);
-    editors[q.id] = CodeMirror.fromTextArea(ta, {
-      mode: "python",
-      theme: "dracula",
-      lineNumbers: true,
-      indentUnit: 4,
-      tabSize: 4,
-      indentWithTabs: false,
-      extraKeys: { Tab: cm => cm.execCommand("indentMore") }
-    });
+    editors[q.id] = CodeMirror.fromTextArea(
+      document.getElementById(`editor-${q.id}`), {
+        mode: "python", theme: "dracula", lineNumbers: true,
+        indentUnit: 4, tabSize: 4, indentWithTabs: false,
+        extraKeys: { Tab: cm => cm.execCommand("indentMore") }
+      }
+    );
   });
 }
 
-// ── Run Python ───────────────────────────────────────────────────────────────
 async function runPython(code) {
   const result = await pyodide.runPythonAsync(`
 import sys, io, traceback
@@ -535,76 +308,49 @@ _buf = io.StringIO()
 _err = None
 try:
     sys.stdout = _buf
-    exec(${JSON.stringify(code)})
+    exec(${JSON.stringify("__code__")}.replace("__code__", ""))
 except Exception as e:
     _err = traceback.format_exc()
 finally:
     sys.stdout = sys.__stdout__
 (_buf.getvalue(), _err)
-`);
+`.replace('"__code__"', JSON.stringify(code)));
   const [output, err] = result.toJs();
   return { output: output || "", error: err || null };
 }
 
-// ── Run button ───────────────────────────────────────────────────────────────
 async function runCode(qid) {
-  if (!pyodide) return alert("Python is still loading. Please wait.");
+  if (!pyodide) return alert("Python is still loading — please wait.");
   const code = editors[qid].getValue();
   const t0 = performance.now();
   const { output, error } = await runPython(code);
   const ms = (performance.now() - t0).toFixed(0);
-
   const panel = document.getElementById(`out-${qid}`);
   const text  = document.getElementById(`out-text-${qid}`);
-  const time  = document.getElementById(`out-time-${qid}`);
   panel.classList.add("visible");
-  time.textContent = `${ms}ms`;
-  if (error) {
-    text.className = "output-text error";
-    text.textContent = error;
-  } else {
-    text.className = "output-text";
-    text.textContent = output || "(no output)";
-  }
+  document.getElementById(`out-time-${qid}`).textContent = `${ms}ms`;
+  if (error) { text.className = "output-text error"; text.textContent = error; }
+  else       { text.className = "output-text";       text.textContent = output || "(no output)"; }
 }
 
-// ── Check button ─────────────────────────────────────────────────────────────
 async function checkCode(qid) {
-  if (!pyodide) return alert("Python is still loading. Please wait.");
+  if (!pyodide) return alert("Python is still loading — please wait.");
   const code = editors[qid].getValue();
   const { output, error } = await runPython(code);
-
-  // Show output
   const panel = document.getElementById(`out-${qid}`);
   const text  = document.getElementById(`out-text-${qid}`);
   panel.classList.add("visible");
-  if (error) {
-    text.className = "output-text error";
-    text.textContent = error;
-  } else {
-    text.className = "output-text";
-    text.textContent = output || "(no output)";
-  }
+  if (error) { text.className = "output-text error"; text.textContent = error; }
+  else       { text.className = "output-text";       text.textContent = output || "(no output)"; }
+  if (error) { showResult(qid, false, null, "Fix the error above first, then check again."); return; }
 
-  if (error) {
-    showResult(qid, false, null, "Your code has an error — fix it and try again.");
-    return;
-  }
-
-  // Parse lines
   const lines = output.trimEnd().split("\n");
   const q = QUESTIONS.find(q => String(q.id) === String(qid));
   const result = q.check(lines);
-
-  // Update dot
   const dot = document.getElementById(`dot-${qid}`);
   dot.className = "status-dot " + (result.pass ? "pass" : "fail");
-
-  // Track progress
   if (result.pass) passed.add(qid); else passed.delete(qid);
   updateProgress();
-
-  // Show result
   showResult(qid, result.pass, result.diffs, result.msg);
 }
 
@@ -614,16 +360,14 @@ function showResult(qid, pass, diffs, msg) {
   if (pass) {
     panel.innerHTML = `<div class="result-title">✅ Passed!</div><div>${msg || "Your output matches perfectly."}</div>`;
   } else {
-    let html = `<div class="result-title">❌ Not quite yet</div>`;
-    if (msg) { html += `<div>${msg}</div>`; }
-    if (diffs) {
-      diffs.forEach(d => {
-        html += `<div class="diff-row">
-          Got:      <span class="diff-got">${escHtml(d.got)}</span><br>
-          Expected: <span class="diff-expected">${escHtml(d.exp)}</span>
-        </div>`;
-      });
-    }
+    let html = `<div class="result-title">❌ Not quite — check the diff below</div>`;
+    if (msg) html += `<div>${msg}</div>`;
+    if (diffs) diffs.forEach(d => {
+      html += `<div class="diff-row">
+        Got:      <span class="diff-got">${escHtml(d.got)}</span><br>
+        Expected: <span class="diff-expected">${escHtml(d.exp)}</span>
+      </div>`;
+    });
     panel.innerHTML = html;
   }
 }
@@ -649,9 +393,7 @@ function escHtml(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
-// ── Init ─────────────────────────────────────────────────────────────────────
 buildUI();
-
 (async () => {
   pyodide = await loadPyodide();
   const loading = document.getElementById("loading");
