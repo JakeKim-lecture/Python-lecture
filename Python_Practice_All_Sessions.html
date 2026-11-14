@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Practice — All Sessions</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+<style>
+:root {
+  --bg:       #f5f2eb;
+  --card:     #ffffff;
+  --navy:     #1b2a4a;
+  --teal:     #2a7f6f;
+  --teal-lt:  #e8f5f2;
+  --amber:    #e07b39;
+  --pass:     #1f7a55;
+  --pass-bg:  #edf7f2;
+  --fail:     #c0392b;
+  --fail-bg:  #fdf0ef;
+  --code-bg:  #282a36;
+  --border:   #e0dbd0;
+  --text:     #1b2a4a;
+  --muted:    #7a7a8a;
+  --mono:     'Fira Code', monospace;
+  --sans:     'DM Sans', sans-serif;
+  --serif:    'Fraunces', serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ── Loading ───────────────────────────────────────────── */
+#loading {
+  position: fixed; inset: 0; background: var(--navy);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 999; gap: 20px; transition: opacity .5s;
+}
+#loading h2 { font-family: var(--serif); color: #fff; font-size: 1.6rem; font-weight: 400; }
+#loading p  { color: #8899bb; font-size: .9rem; }
+.spinner {
+  width: 44px; height: 44px; border: 3px solid #2a3f6a;
+  border-top-color: var(--amber); border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Header ────────────────────────────────────────────── */
+header {
+  background: var(--navy); color: #fff;
+  position: sticky; top: 0; z-index: 10;
+  box-shadow: 0 2px 16px rgba(0,0,0,.2);
+}
+.header-inner {
+  padding: 20px 40px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.header-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 12px;
+}
+.course-label {
+  font-size: .68rem; color: rgba(255,255,255,.4);
+  text-transform: uppercase; letter-spacing: .1em;
+  font-family: var(--mono); margin-bottom: 3px;
+}
+header h1 {
+  font-family: var(--serif); font-size: 1.25rem; font-weight: 600;
+  letter-spacing: -.01em; line-height: 1.2;
+}
+header h1 span { color: var(--amber); }
+.badge {
+  font-size: .72rem; background: rgba(255,255,255,.1);
+  padding: 4px 11px; border-radius: 20px; font-family: var(--mono);
+  white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+}
+.progress-row { display: flex; align-items: center; gap: 12px; }
+.progress-bar {
+  flex: 1; height: 5px; background: rgba(255,255,255,.12);
+  border-radius: 10px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--teal), #4ecca3);
+  border-radius: 10px; transition: width .5s cubic-bezier(.4,0,.2,1); width: 0%;
+}
+.progress-label {
+  font-size: .78rem; color: #8899bb; white-space: nowrap;
+  font-variant-numeric: tabular-nums; min-width: 48px; text-align: right;
+}
+
+/* ── Tab bar ───────────────────────────────────────────── */
+.tab-bar {
+  display: flex; border-top: 1px solid rgba(255,255,255,.07);
+  overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; padding: 0 28px;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  flex-shrink: 0; padding: 9px 14px;
+  border: none; border-bottom: 3px solid transparent;
+  background: transparent; color: rgba(255,255,255,.45);
+  font-family: var(--sans); font-size: .82rem; font-weight: 600;
+  cursor: pointer; white-space: nowrap; transition: color .15s, border-color .15s, background .15s;
+}
+.tab-btn:hover { color: rgba(255,255,255,.85); background: rgba(255,255,255,.05); }
+.tab-btn.active { color: #fff; border-bottom-color: var(--amber); }
+.tab-btn.done::after { content: ' ✓'; color: #4ecca3; font-size: .78rem; }
+
+/* ── Session panels ────────────────────────────────────── */
+.session-panel {
+  max-width: 860px; margin: 0 auto;
+  padding: 36px 24px 80px;
+  display: flex; flex-direction: column; gap: 28px; width: 100%;
+}
+
+/* ── Question cards ────────────────────────────────────── */
+.card {
+  background: var(--card); border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07);
+  border: 1px solid var(--border); overflow: hidden;
+  animation: fadeUp .4s ease both;
+}
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(12px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.card.challenge { border-color: var(--amber); }
+
+.card-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 24px; border-bottom: 1px solid var(--border); background: #fdfcfa;
+}
+.qnum {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--navy); color: #fff;
+  font-family: var(--mono); font-size: .8rem; font-weight: 500;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.card.challenge .qnum { background: var(--amber); }
+.card-header h2 { font-family: var(--serif); font-size: 1.05rem; font-weight: 600; flex: 1; }
+.status-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #d8d5ce; transition: background .3s;
+}
+.status-dot.pass { background: var(--pass); }
+.status-dot.fail { background: var(--fail); }
+
+.card-body { padding: 20px 24px; }
+.instructions {
+  font-size: .93rem; line-height: 1.7; color: #3a3a4a; margin-bottom: 16px;
+}
+.instructions code {
+  font-family: var(--mono); font-size: .85rem;
+  background: #f0ede6; padding: 1px 6px; border-radius: 4px; color: var(--teal);
+}
+.instructions strong { color: var(--navy); }
+.instructions em { color: #555; }
+
+.expected-box {
+  background: var(--code-bg); border-radius: 8px;
+  padding: 12px 16px; margin-bottom: 16px;
+  font-family: var(--mono); font-size: .82rem; color: #f8f8f2; line-height: 1.6;
+}
+.expected-box .label {
+  color: #6272a4; font-size: .72rem;
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px;
+}
+
+.tip-box {
+  background: var(--teal-lt); border-left: 3px solid var(--teal);
+  border-radius: 0 8px 8px 0; padding: 10px 14px; margin-bottom: 16px;
+  font-size: .86rem; color: #1a4a40; line-height: 1.6;
+}
+.tip-box code {
+  font-family: var(--mono); font-size: .82rem;
+  background: rgba(42,127,111,.15); padding: 1px 5px; border-radius: 3px;
+}
+
+/* ── CodeMirror ────────────────────────────────────────── */
+.CodeMirror {
+  border-radius: 8px; font-family: var(--mono) !important;
+  font-size: 13.5px !important; line-height: 1.65 !important;
+  height: auto; min-height: 80px;
+}
+.CodeMirror-scroll { min-height: 80px; }
+
+/* ── Buttons ───────────────────────────────────────────── */
+.btn-row { display: flex; gap: 10px; margin-top: 12px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border-radius: 8px; border: none;
+  font-family: var(--sans); font-size: .85rem; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+}
+.btn-run   { background: var(--navy); color: #fff; }
+.btn-run:hover   { background: #263a60; }
+.btn-check { background: var(--teal); color: #fff; }
+.btn-check:hover { background: #236958; }
+.btn-reset {
+  background: transparent; color: var(--muted);
+  border: 1px solid var(--border); margin-left: auto;
+}
+.btn-reset:hover { color: var(--text); border-color: #aaa; }
+
+/* ── Output ────────────────────────────────────────────── */
+.output-panel {
+  margin-top: 14px; background: var(--code-bg);
+  border-radius: 8px; overflow: hidden; display: none;
+}
+.output-panel.visible { display: block; }
+.output-label {
+  padding: 6px 14px; font-family: var(--mono); font-size: .7rem;
+  color: #6272a4; text-transform: uppercase; letter-spacing: .06em;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.output-text {
+  padding: 12px 16px; font-family: var(--mono); font-size: .84rem;
+  color: #f8f8f2; white-space: pre-wrap; line-height: 1.65; min-height: 36px;
+}
+.output-text.error { color: #ff5555; }
+
+/* ── Result ────────────────────────────────────────────── */
+.result-panel {
+  margin-top: 10px; border-radius: 8px; padding: 12px 16px;
+  display: none; font-size: .88rem; line-height: 1.6;
+}
+.result-panel.visible { display: block; }
+.result-panel.pass { background: var(--pass-bg); border: 1px solid #b7e4cc; color: var(--pass); }
+.result-panel.fail { background: var(--fail-bg); border: 1px solid #f5c0bb; color: var(--fail); }
+.result-title { font-weight: 600; font-size: .95rem; margin-bottom: 4px; }
+.diff-row { font-family: var(--mono); font-size: .8rem; margin-top: 6px; }
+.diff-row span { display: inline-block; padding: 1px 6px; border-radius: 3px; margin: 1px 0; }
+.diff-got      { background: #fce8e6; color: #c0392b; }
+.diff-expected { background: #e6f4ea; color: #1f7a55; }
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 540px) {
+  .header-inner { padding: 14px 16px 10px; }
+  .tab-bar { padding: 0 6px; }
+  .tab-btn { padding: 8px 10px; font-size: .75rem; }
+  .session-panel { padding: 24px 12px 60px; }
+  .card-header { padding: 14px 16px; }
+  .card-body { padding: 16px 16px; }
+  header h1 { font-size: 1.05rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="spinner"></div>
+  <h2>Setting up Python…</h2>
+  <p>Loading Pyodide runtime — just a moment</p>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="header-inner">
+    <div class="header-top">
+      <div>
+        <div class="course-label">Python Practice</div>
+        <h1>Session <span id="session-num">1</span> — <span id="session-sub">Hello, Python</span></h1>
+      </div>
+      <span class="badge" id="session-badge">7 questions</span>
+    </div>
+    <div class="progress-row">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">0 / 7</div>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-btn-0" onclick="switchTab(0)">Session 1</button>
+    <button class="tab-btn"        id="tab-btn-1" onclick="switchTab(1)">Session 2</button>
+    <button class="tab-btn"        id="tab-btn-2" onclick="switchTab(2)">Session 3</button>
+    <button class="tab-btn"        id="tab-btn-3" onclick="switchTab(3)">Session 4</button>
+    <button class="tab-btn"        id="tab-btn-4" onclick="switchTab(4)">Session 5</button>
+    <button class="tab-btn"        id="tab-btn-5" onclick="switchTab(5)">Session 6</button>
+    <button class="tab-btn"        id="tab-btn-6" onclick="switchTab(6)">Session 7</button>
+    <button class="tab-btn"        id="tab-btn-7" onclick="switchTab(7)">Session 8</button>
+    <button class="tab-btn"        id="tab-btn-8" onclick="switchTab(8)">Session 9</button>
+    <button class="tab-btn"        id="tab-btn-9" onclick="switchTab(9)">Session 10</button>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<script>
+// ── Session & question definitions ───────────────────────────────────────────
+const SESSIONS = [
+
+  /* ════════════════════════════════════════════════════════
+     Session 1 — Hello, Python
+  ════════════════════════════════════════════════════════ */
+  {
+    num: 1, title: "Hello, Python",
+    questions: [
+      {
+        id: 1, title: "Hello, World!",
+        instructions: `Use <code>print()</code> to display exactly the text below.`,
+        tip: null,
+        expected: ["Hello, World!"],
+        starter: `# Write your print() statement below\n`,
+        check(lines) {
+          if (lines[0] === "Hello, World!") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "Hello, World!" }]);
+        }
+      },
+      {
+        id: 2, title: "Personalised Greeting",
+        instructions: `Store your name in a variable called <code>name</code>, then print a greeting.\n\nThe output should look like: <code>Hello, Alice!</code> (using your own name)`,
+        tip: null,
+        expected: ["Hello, <your name>!"],
+        starter: `name = "Alice"   # ← change to your name\n\n# Print: Hello, <name>!\n`,
+        check(lines) {
+          const l = lines[0] ?? "";
+          if (l.startsWith("Hello, ") && l.endsWith("!") && l.length > 8) return ok("Looks great!");
+          return fail([{ got: l, exp: 'Hello, <your name>!  (must start with "Hello, " and end with "!")' }]);
+        }
+      },
+      {
+        id: 3, title: "Two-line Introduction",
+        instructions: `Use <strong>two</strong> <code>print()</code> calls to produce two lines.\n\nLine 1: <code>My name is Jake.</code>\nLine 2: <code>I am 20 years old.</code>\n\n(You can change the name and age — the format is what matters!)`,
+        tip: null,
+        expected: ["My name is <name>.", "I am <age> years old."],
+        starter: `name = "Jake"\nage  = 20\n\n# Write two print() statements\n`,
+        check(lines) {
+          const diffs = [];
+          const l1 = lines[0] ?? "", l2 = lines[1] ?? "";
+          if (!l1.startsWith("My name is ") || !l1.endsWith("."))
+            diffs.push({ got: l1, exp: 'My name is <name>.  (must start with "My name is " and end with ".")' });
+          if (!l2.startsWith("I am ") || !l2.endsWith(" years old."))
+            diffs.push({ got: l2, exp: "I am <age> years old." });
+          if (lines.length < 2 && diffs.length === 0)
+            diffs.push({ got: "(only 1 line)", exp: "Need 2 lines" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 4, title: "Sum of Two Numbers",
+        instructions: `<code>a = 15</code> and <code>b = 27</code> are given.\n\nCalculate their sum and print it in this exact format:`,
+        tip: null,
+        expected: ["15 + 27 = 42"],
+        starter: `a = 15\nb = 27\n\n# Print: 15 + 27 = 42\n`,
+        check(lines) {
+          if (lines[0] === "15 + 27 = 42") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "15 + 27 = 42" }]);
+        }
+      },
+      {
+        id: 5, title: "Rectangle Info",
+        instructions: `<code>width = 6</code> and <code>height = 9</code> are given.\n\nPrint <strong>two lines</strong> — area first, then perimeter:\n\n<strong>Formula:</strong> area = width × height,  perimeter = 2 × (width + height)`,
+        tip: null,
+        expected: ["Area: 54", "Perimeter: 30"],
+        starter: `width  = 6\nheight = 9\n\n# Print two lines: Area and Perimeter\n`,
+        check(lines) {
+          const diffs = [];
+          if (lines[0] !== "Area: 54")      diffs.push({ got: lines[0] ?? "(nothing)", exp: "Area: 54" });
+          if (lines[1] !== "Perimeter: 30") diffs.push({ got: lines[1] ?? "(nothing)", exp: "Perimeter: 30" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 6, title: "Swap Two Variables",
+        instructions: `<code>x = 10</code> and <code>y = 25</code> are given.\n\nSwap their values, then print both on separate lines.\n\n<em>Hint: try <code>x, y = y, x</code></em>`,
+        tip: null,
+        expected: ["x = 25", "y = 10"],
+        starter: `x = 10\ny = 25\n\n# Swap x and y, then print both\n`,
+        check(lines) {
+          const diffs = [];
+          if (lines[0] !== "x = 25") diffs.push({ got: lines[0] ?? "(nothing)", exp: "x = 25" });
+          if (lines[1] !== "y = 10") diffs.push({ got: lines[1] ?? "(nothing)", exp: "y = 10" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: "C", isChallenge: true, title: "⭐ Challenge — Shopping Receipt",
+        instructions: `The three items below are given. Print a 3-line receipt where each line follows this format: <code>Item: $price</code>`,
+        tip: null,
+        expected: ["Apple: $1.5", "Bread: $2.99", "Milk: $3.0"],
+        starter: `item1, price1 = "Apple", 1.5\nitem2, price2 = "Bread", 2.99\nitem3, price3 = "Milk",  3.0\n\n# Print three lines\n`,
+        check(lines) {
+          const exp = ["Apple: $1.5", "Bread: $2.99", "Milk: $3.0"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(nothing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      }
+    ]
+  },
+
+  /* ════════════════════════════════════════════════════════
+     Session 2 — Data Types & Numbers
+  ════════════════════════════════════════════════════════ */
+  {
+    num: 2, title: "Data Types & Numbers",
+    questions: [
+      {
+        id: 1, title: "What Type Is It?",
+        instructions: `Python has four basic data types you'll use constantly: <code>int</code>, <code>float</code>, <code>str</code>, and <code>bool</code>.\n\nUse <code>print(type(...))</code> on each of the four values below — one <code>print()</code> per line.`,
+        tip: `<code>type(42)</code> returns <code>&lt;class 'int'&gt;</code> — just pass it straight into <code>print()</code>!`,
+        expected: ["<class 'int'>", "<class 'float'>", "<class 'str'>", "<class 'bool'>"],
+        starter: `# Print the type of each value below\nprint(type(42))\n# now do: 3.14  "hello"  True\n`,
+        check(lines) {
+          const exp = ["<class 'int'>", "<class 'float'>", "<class 'str'>", "<class 'bool'>"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 2, title: "Integer Arithmetic",
+        instructions: `<code>a = 17</code> and <code>b = 5</code> are given.\n\nPrint the result of <strong>three operations</strong>, each on its own line:\n<code>a + b</code> &nbsp; <code>a - b</code> &nbsp; <code>a * b</code>`,
+        tip: null,
+        expected: ["22", "12", "85"],
+        starter: `a = 17\nb = 5\n\n# Print a+b, a-b, and a*b on separate lines\n`,
+        check(lines) {
+          const exp = ["22", "12", "85"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 3, title: "Three Kinds of Division",
+        instructions: `Python has three division operators:\n<code>a / b</code> → regular division (float)\n<code>a // b</code> → floor division (drops decimal)\n<code>a % b</code> → modulo (remainder only)\n\n<code>a = 17</code>, <code>b = 5</code>. Print each result on its own line.`,
+        tip: `<code>//</code> keeps only the whole part. <code>%</code> keeps only the remainder.`,
+        expected: ["3.4", "3", "2"],
+        starter: `a = 17\nb = 5\n\n# Print: a/b, a//b, a%b\n`,
+        check(lines) {
+          const exp = ["3.4", "3", "2"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 4, title: "Casting: String → Int",
+        instructions: `<code>age_str = "23"</code> is a <strong>string</strong>, not a number — you can't do math with it yet!\n\nCast it to an integer using <code>int()</code>, add <code>7</code> to it, then print the result.`,
+        tip: `<code>int("23")</code> turns the string <code>"23"</code> into the number <code>23</code>.`,
+        expected: ["30"],
+        starter: `age_str = "23"\n\n# Cast to int, add 7, then print\n`,
+        check(lines) {
+          if (lines[0] === "30") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "30" }]);
+        }
+      },
+      {
+        id: 5, title: "Casting: Float ↔ Int",
+        instructions: `Two values are given. Print two lines:\n\nLine 1: cast <code>price = 9.99</code> to <code>int</code> and print it\nLine 2: cast <code>score = 87</code> to <code>float</code> and print it\n\nNotice what happens to the decimal!`,
+        tip: `<code>int(9.99)</code> does <strong>not</strong> round — it simply drops everything after the decimal point.`,
+        expected: ["9", "87.0"],
+        starter: `price = 9.99\nscore = 87\n\n# Line 1: print int(price)\n# Line 2: print float(score)\n`,
+        check(lines) {
+          const diffs = [];
+          if (lines[0] !== "9")    diffs.push({ got: lines[0] ?? "(missing)", exp: "9" });
+          if (lines[1] !== "87.0") diffs.push({ got: lines[1] ?? "(missing)", exp: "87.0" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 6, title: "Boolean Results",
+        instructions: `Comparisons in Python return <code>True</code> or <code>False</code>.\n\n<code>x = 10</code>, <code>y = 3</code>. Print the result of these three comparisons on separate lines:\n<code>x &gt; y</code> &nbsp; <code>x == y</code> &nbsp; <code>x != y</code>`,
+        tip: `<code>==</code> checks equality. <code>!=</code> means "not equal". Python capitalises <code>True</code> and <code>False</code>.`,
+        expected: ["True", "False", "True"],
+        starter: `x = 10\ny = 3\n\n# Print x > y, x == y, x != y\n`,
+        check(lines) {
+          const exp = ["True", "False", "True"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: "C", isChallenge: true, title: "⭐ Challenge — Number Profile",
+        instructions: `<code>n = 256</code> is given. Print <strong>four lines</strong> that describe it completely:\n\nLine 1: its type → <code>&lt;class 'int'&gt;</code>\nLine 2: its float version → <code>256.0</code>\nLine 3: <code>n</code> squared → <code>65536</code>\nLine 4: whether it is greater than 100 → <code>True</code>`,
+        tip: null,
+        expected: ["<class 'int'>", "256.0", "65536", "True"],
+        starter: `n = 256\n\n# Print four lines about n\n`,
+        check(lines) {
+          const exp = ["<class 'int'>", "256.0", "65536", "True"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      }
+    ]
+  },
+
+  /* ════════════════════════════════════════════════════════
+     Session 3 — Strings
+  ════════════════════════════════════════════════════════ */
+  {
+    num: 3, title: "Strings",
+    questions: [
+      {
+        id: 1, title: "Indexing Characters",
+        instructions: `Every character in a string has a position called an <strong>index</strong>, starting at <code>0</code>. Negative numbers count from the end: <code>-1</code> is the last character.\n\n<code>word = "Python"</code> is given. Print three lines:\nLine 1: the <strong>first</strong> character\nLine 2: the <strong>last</strong> character\nLine 3: the character at index <code>2</code>`,
+        tip: `<code>word[0]</code> → first character &nbsp;|&nbsp; <code>word[-1]</code> → last character`,
+        expected: ["P", "n", "t"],
+        starter: `word = "Python"\n\n# Print word[0], word[-1], and word[2]\n`,
+        check(lines) {
+          const exp = ["P", "n", "t"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 2, title: "Slicing Strings",
+        instructions: `A <strong>slice</strong> cuts out a piece of a string using <code>string[start:end]</code>.\n\n<code>text = "Hello, World!"</code> is given. Print two lines:\nLine 1: the <strong>first 5</strong> characters\nLine 2: the <strong>last 6</strong> characters`,
+        tip: `Leave <code>start</code> empty to begin from 0: <code>text[:5]</code> &nbsp;|&nbsp; Use a negative index for the end: <code>text[-6:]</code>`,
+        expected: ["Hello", "World!"],
+        starter: `text = "Hello, World!"\n\n# Print the first 5 and last 6 characters\n`,
+        check(lines) {
+          const diffs = [];
+          if (lines[0] !== "Hello")  diffs.push({ got: lines[0] ?? "(missing)", exp: "Hello" });
+          if (lines[1] !== "World!") diffs.push({ got: lines[1] ?? "(missing)", exp: "World!" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 3, title: "upper(), lower(), strip()",
+        instructions: `<code>text = "  Python  "</code> is given (spaces on both sides). Print three lines:\nLine 1: <code>text</code> in ALL CAPS\nLine 2: <code>text</code> in all lowercase\nLine 3: <code>text</code> with the surrounding spaces removed`,
+        tip: `<code>.upper()</code> and <code>.lower()</code> keep spaces. <code>.strip()</code> removes leading and trailing whitespace only.`,
+        expected: ["  PYTHON  ", "  python  ", "Python"],
+        starter: `text = "  Python  "\n\n# Print text.upper(), text.lower(), text.strip()\n`,
+        check(lines) {
+          const exp = ["  PYTHON  ", "  python  ", "Python"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 4, title: "Replacing Text",
+        instructions: `<code>.replace(old, new)</code> swaps every occurrence of one word for another.\n\n<code>sentence = "I love apples and apples are great"</code> is given.\nReplace every <code>"apples"</code> with <code>"oranges"</code> and print the result.`,
+        tip: `<code>.replace()</code> replaces <strong>all</strong> occurrences by default, not just the first one.`,
+        expected: ["I love oranges and oranges are great"],
+        starter: `sentence = "I love apples and apples are great"\n\n# Replace "apples" with "oranges" and print\n`,
+        check(lines) {
+          const exp = "I love oranges and oranges are great";
+          if (lines[0] === exp) return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp }]);
+        }
+      },
+      {
+        id: 5, title: "Concatenation with +",
+        instructions: `Strings can be joined together using the <code>+</code> operator.\n\n<code>first = "Hello"</code> and <code>second = "World"</code> are given.\nJoin them with a space in between and print the result.`,
+        tip: `A space is just a string too: <code>" "</code>. You can chain multiple <code>+</code> together.`,
+        expected: ["Hello World"],
+        starter: `first  = "Hello"\nsecond = "World"\n\n# Join them with a space and print\n`,
+        check(lines) {
+          if (lines[0] === "Hello World") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "Hello World" }]);
+        }
+      },
+      {
+        id: 6, title: "f-strings",
+        instructions: `An <strong>f-string</strong> lets you embed variables directly inside a string. Put an <code>f</code> before the opening quote and wrap variable names in <code>{}</code>.\n\n<code>name = "Jake"</code> and <code>score = 95</code> are given.\nPrint this sentence using an f-string:`,
+        tip: `<code>f"Hello, {name}!"</code> automatically inserts the value of <code>name</code> into the string.`,
+        expected: ["Jake scored 95 out of 100."],
+        starter: `name  = "Jake"\nscore = 95\n\n# Print using an f-string\n`,
+        check(lines) {
+          if (lines[0] === "Jake scored 95 out of 100.") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "Jake scored 95 out of 100." }]);
+        }
+      },
+      {
+        id: "C", isChallenge: true, title: "⭐ Challenge — String Makeover",
+        instructions: `<code>title = "  the great gatsby  "</code> is given (with leading and trailing spaces).\n\nPrint <strong>four lines</strong>:\nLine 1: stripped of spaces\nLine 2: stripped then in ALL CAPS\nLine 3: stripped then with <code>"great"</code> replaced by <code>"good"</code>\nLine 4: the <strong>length</strong> of the stripped version`,
+        tip: `You can chain methods: <code>title.strip().upper()</code> strips first, then uppercases the result.`,
+        expected: ["the great gatsby", "THE GREAT GATSBY", "the good gatsby", "16"],
+        starter: `title = "  the great gatsby  "\n\n# Print four transformed versions\n`,
+        check(lines) {
+          const exp = ["the great gatsby", "THE GREAT GATSBY", "the good gatsby", "16"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      }
+    ]
+  },
+
+  /* ════════════════════════════════════════════════════════
+     Session 4 — Operators & Conditionals
+  ════════════════════════════════════════════════════════ */
+  {
+    num: 4, title: "Operators & Conditionals",
+    questions: [
+      {
+        id: 1, title: "Arithmetic Operators",
+        instructions: `<code>a = 20</code> and <code>b = 4</code> are given. Print the result of <strong>four operations</strong>, each on its own line:\n<code>a + b</code> &nbsp; <code>a - b</code> &nbsp; <code>a * b</code> &nbsp; <code>a / b</code>`,
+        tip: `Division <code>/</code> always returns a <code>float</code>, even when the result is a whole number: <code>20 / 4</code> → <code>5.0</code>`,
+        expected: ["24", "16", "80", "5.0"],
+        starter: `a = 20\nb = 4\n\n# Print a+b, a-b, a*b, and a/b on separate lines\n`,
+        check(lines) {
+          const exp = ["24", "16", "80", "5.0"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 2, title: "Modulo & Power",
+        instructions: `<code>%</code> → <strong>modulo</strong>: gives the remainder after division\n<code>**</code> → <strong>power</strong>: raises a number to an exponent\n\n<code>n = 17</code> is given. Print two lines:\nLine 1: the remainder when <code>n</code> is divided by <code>5</code>\nLine 2: <code>n</code> squared`,
+        tip: `<code>17 % 5</code> → <code>2</code> because 17 = 3×5 + <strong>2</strong> &nbsp;|&nbsp; <code>17 ** 2</code> → <code>289</code>`,
+        expected: ["2", "289"],
+        starter: `n = 17\n\n# Print n%5 and n**2\n`,
+        check(lines) {
+          const diffs = [];
+          if (lines[0] !== "2")   diffs.push({ got: lines[0] ?? "(missing)", exp: "2" });
+          if (lines[1] !== "289") diffs.push({ got: lines[1] ?? "(missing)", exp: "289" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 3, title: "Comparison Operators",
+        instructions: `Comparisons always return <code>True</code> or <code>False</code>.\n\n<code>x = 15</code> and <code>y = 15</code> are given. Print three comparison results on separate lines:\n<code>x &gt; y</code> &nbsp; <code>x == y</code> &nbsp; <code>x &gt;= y</code>`,
+        tip: `<code>==</code> checks if two values are <em>equal</em>. <code>>=</code> means "greater than <em>or</em> equal to".`,
+        expected: ["False", "True", "True"],
+        starter: `x = 15\ny = 15\n\n# Print x > y, x == y, x >= y\n`,
+        check(lines) {
+          const exp = ["False", "True", "True"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 4, title: "if / else — Even or Odd",
+        instructions: `Write a block that checks whether <code>n</code> is even or odd.\n\n<code>n = 15</code> is given. Print:\n<code>Even</code> if <code>n</code> is divisible by 2\n<code>Odd</code> otherwise`,
+        tip: `Use the modulo operator: if <code>n % 2 == 0</code> the number is even.`,
+        expected: ["Odd"],
+        starter: `n = 15\n\nif n % 2 == 0:\n    print("Even")\nelse:\n    # your turn\n    pass\n`,
+        check(lines) {
+          if (lines[0] === "Odd") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "Odd" }]);
+        }
+      },
+      {
+        id: 5, title: "if / elif / else — Letter Grade",
+        instructions: `<code>score = 82</code> is given. Print the matching letter grade:\n90+ → <code>A</code> &nbsp; 80–89 → <code>B</code> &nbsp; 70–79 → <code>C</code> &nbsp; 60–69 → <code>D</code> &nbsp; below 60 → <code>F</code>`,
+        tip: `Check from <em>highest to lowest</em>. Once a condition matches, the rest are skipped automatically.`,
+        expected: ["B"],
+        starter: `score = 82\n\nif score >= 90:\n    print("A")\nelif score >= 80:\n    # your turn\n    pass\nelif score >= 70:\n    pass\nelif score >= 60:\n    pass\nelse:\n    pass\n`,
+        check(lines) {
+          if (lines[0] === "B") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "B" }]);
+        }
+      },
+      {
+        id: 6, title: "Logical Operators — and / or",
+        instructions: `<code>and</code> → both must be <code>True</code>\n<code>or</code> → at least one must be <code>True</code>\n\n<code>age = 20</code> and <code>has_ticket = True</code> are given.\nPrint <code>Welcome in!</code> if the person is 18+ <strong>and</strong> has a ticket. Otherwise print <code>Entry denied.</code>`,
+        tip: `Combine conditions directly: <code>if age >= 18 and has_ticket:</code>`,
+        expected: ["Welcome in!"],
+        starter: `age = 20\nhas_ticket = True\n\n# Print "Welcome in!" or "Entry denied."\n`,
+        check(lines) {
+          if (lines[0] === "Welcome in!") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "Welcome in!" }]);
+        }
+      },
+      {
+        id: "C1", isChallenge: true, title: "⭐ Challenge 1 — Ticket Pricing",
+        instructions: `Cinema ticket rules:\n<strong>Under 5:</strong> free → print <code>Free entry!</code>\n<strong>Age 5–12:</strong> $8. Members get 50% off.\n<strong>Age 13+:</strong> $15. Members get 20% off.\n\n<code>age = 8</code> and <code>is_member = True</code> are given.\nCalculate the price and print: <code>Ticket price: $4.0</code>`,
+        tip: `Use a <em>nested</em> <code>if</code> inside each age bracket to check <code>is_member</code>.`,
+        expected: ["Ticket price: $4.0"],
+        starter: `age = 8\nis_member = True\n\n# Use if/elif/else to calculate and print the price\n`,
+        check(lines) {
+          if (lines[0] === "Ticket price: $4.0") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "Ticket price: $4.0" }]);
+        }
+      },
+      {
+        id: "C2", isChallenge: true, title: "⭐ Challenge 2 — Number Profile",
+        instructions: `<code>n = 12</code> is given. Print <strong>three lines</strong> using <code>if/else</code> blocks:\n\nLine 1: <code>Positive</code>, <code>Negative</code>, or <code>Zero</code>\nLine 2: <code>Even</code> or <code>Odd</code>\nLine 3: <code>Divisible by 3</code> or <code>Not divisible by 3</code>`,
+        tip: `Write <strong>three separate</strong> <code>if/else</code> blocks — one for each line.`,
+        expected: ["Positive", "Even", "Divisible by 3"],
+        starter: `n = 12\n\n# Block 1: Positive / Negative / Zero\n\n# Block 2: Even / Odd\n\n# Block 3: Divisible by 3 / Not divisible by 3\n`,
+        check(lines) {
+          const exp = ["Positive", "Even", "Divisible by 3"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      }
+    ]
+  },
+
+  /* ════════════════════════════════════════════════════════
+     Session 5 — Lists
+  ════════════════════════════════════════════════════════ */
+  {
+    num: 5, title: "Lists",
+    questions: [
+      {
+        id: 1, title: "Creating a List",
+        instructions: `A <strong>list</strong> stores multiple values in a single variable. Items are separated by commas inside square brackets <code>[]</code>.\n\nCreate a list called <code>fruits</code> that contains <code>"apple"</code>, <code>"banana"</code>, and <code>"cherry"</code>, then print it.`,
+        tip: `Lists can hold any type — strings, numbers, booleans, even other lists. The order is preserved.`,
+        expected: ["['apple', 'banana', 'cherry']"],
+        starter: `# Create the list and print it\n`,
+        check(lines) {
+          if (lines[0] === "['apple', 'banana', 'cherry']") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "['apple', 'banana', 'cherry']" }]);
+        }
+      },
+      {
+        id: 2, title: "List Indexing",
+        instructions: `Just like strings, list items have index positions starting at <code>0</code>. Negative indices count from the end.\n\n<code>numbers = [10, 20, 30, 40, 50]</code> is given. Print three lines:\nLine 1: the <strong>first</strong> element\nLine 2: the <strong>last</strong> element\nLine 3: the element at index <code>2</code>`,
+        tip: `<code>numbers[0]</code> → first &nbsp;|&nbsp; <code>numbers[-1]</code> → last &nbsp;|&nbsp; <code>numbers[2]</code> → third`,
+        expected: ["10", "50", "30"],
+        starter: `numbers = [10, 20, 30, 40, 50]\n\n# Print the first, last, and index-2 element\n`,
+        check(lines) {
+          const exp = ["10", "50", "30"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 3, title: "List Slicing",
+        instructions: `Slicing a list works exactly like slicing a string: <code>list[start:end]</code>.\n\n<code>letters = ["a", "b", "c", "d", "e"]</code> is given. Print two lines:\nLine 1: the <strong>first 3</strong> elements\nLine 2: the <strong>last 2</strong> elements`,
+        tip: `<code>letters[:3]</code> gives the first 3. <code>letters[-2:]</code> gives the last 2 (from index -2 to the end).`,
+        expected: ["['a', 'b', 'c']", "['d', 'e']"],
+        starter: `letters = ["a", "b", "c", "d", "e"]\n\n# Print the first 3 and last 2 elements\n`,
+        check(lines) {
+          const diffs = [];
+          if (lines[0] !== "['a', 'b', 'c']") diffs.push({ got: lines[0] ?? "(missing)", exp: "['a', 'b', 'c']" });
+          if (lines[1] !== "['d', 'e']")       diffs.push({ got: lines[1] ?? "(missing)", exp: "['d', 'e']" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 4, title: "append() and len()",
+        instructions: `<code>.append(item)</code> adds a new item to the <strong>end</strong> of a list.\n<code>len(list)</code> returns the number of items.\n\n<code>colors = ["red", "green"]</code> is given.\nAppend <code>"blue"</code> to it, then print two lines:\nLine 1: the updated list\nLine 2: its length`,
+        tip: `<code>colors.append("blue")</code> modifies the list <em>in place</em> — the list itself changes.`,
+        expected: ["['red', 'green', 'blue']", "3"],
+        starter: `colors = ["red", "green"]\n\n# Append "blue", then print the list and its length\n`,
+        check(lines) {
+          const diffs = [];
+          if (lines[0] !== "['red', 'green', 'blue']") diffs.push({ got: lines[0] ?? "(missing)", exp: "['red', 'green', 'blue']" });
+          if (lines[1] !== "3")                        diffs.push({ got: lines[1] ?? "(missing)", exp: "3" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 5, title: "remove() and pop()",
+        instructions: `<code>.remove(value)</code> removes the first item that matches that value.\n<code>.pop()</code> removes and returns the <strong>last</strong> item.\n\n<code>items = [1, 2, 3, 4, 5]</code> is given.\nRemove the value <code>3</code>, then pop the last element, then print the list.`,
+        tip: `<code>.remove(3)</code> removes the FIRST occurrence of the value 3 (not index 3). <code>.pop()</code> removes the last element.`,
+        expected: ["[1, 2, 4]"],
+        starter: `items = [1, 2, 3, 4, 5]\n\n# Remove value 3, pop the last item, then print\n`,
+        check(lines) {
+          if (lines[0] === "[1, 2, 4]") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "[1, 2, 4]" }]);
+        }
+      },
+      {
+        id: 6, title: "Sorting a List",
+        instructions: `<code>.sort()</code> rearranges a list in ascending order — smallest first.\n\n<code>scores = [42, 15, 78, 3, 55]</code> is given.\nSort the list, then print two lines:\nLine 1: the sorted list\nLine 2: the highest score (use <code>max()</code>)`,
+        tip: `<code>.sort()</code> sorts <strong>in place</strong> (changes the list itself) and returns <code>None</code>. Call <code>print(scores)</code> <em>after</em> sorting, not <code>print(scores.sort())</code>.`,
+        expected: ["[3, 15, 42, 55, 78]", "78"],
+        starter: `scores = [42, 15, 78, 3, 55]\n\n# Sort the list, then print it and its max\n`,
+        check(lines) {
+          const diffs = [];
+          if (lines[0] !== "[3, 15, 42, 55, 78]") diffs.push({ got: lines[0] ?? "(missing)", exp: "[3, 15, 42, 55, 78]" });
+          if (lines[1] !== "78")                   diffs.push({ got: lines[1] ?? "(missing)", exp: "78" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: "C1", isChallenge: true, title: "⭐ Challenge 1 — List Stats",
+        instructions: `<code>prices = [12, 8, 25, 3, 16]</code> is given.\n\nPrint <strong>three lines</strong>:\nLine 1: how many items are in the list\nLine 2: the total of all prices\nLine 3: the cheapest price`,
+        tip: `<code>len()</code>, <code>sum()</code>, and <code>min()</code> all work directly on a list: <code>sum(prices)</code>, <code>min(prices)</code>.`,
+        expected: ["5", "64", "3"],
+        starter: `prices = [12, 8, 25, 3, 16]\n\n# Print: count, total, minimum\n`,
+        check(lines) {
+          const exp = ["5", "64", "3"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: "C2", isChallenge: true, title: "⭐ Challenge 2 — Build a Squares List",
+        instructions: `Use a <code>for</code> loop to build a list of the squares of 1 through 5: <code>[1, 4, 9, 16, 25]</code>.\n\nStart with an empty list, append each square inside the loop, then print the final list.`,
+        tip: `Use <code>for i in range(1, 6):</code> and <code>squares.append(i ** 2)</code> to build the list one element at a time.`,
+        expected: ["[1, 4, 9, 16, 25]"],
+        starter: `squares = []\n\n# Build the list of squares using a for loop\n`,
+        check(lines) {
+          if (lines[0] === "[1, 4, 9, 16, 25]") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "[1, 4, 9, 16, 25]" }]);
+        }
+      }
+    ]
+  },
+
+  /* ════════════════════════════════════════════════════════
+     Session 6 — Loops
+  ════════════════════════════════════════════════════════ */
+  {
+    num: 6, title: "Loops (for / while)",
+    questions: [
+      {
+        id: 1, title: "for Loop over a List",
+        instructions: `A <code>for</code> loop goes through each item in a list one at a time.\n\n<code>fruits = ["apple", "banana", "cherry"]</code> is given.\nPrint each fruit on its own line.`,
+        tip: `The variable after <code>for</code> takes a new value each iteration: <code>for fruit in fruits: print(fruit)</code>`,
+        expected: ["apple", "banana", "cherry"],
+        starter: `fruits = ["apple", "banana", "cherry"]\n\n# Print each fruit\n`,
+        check(lines) {
+          const exp = ["apple", "banana", "cherry"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 2, title: "for Loop with range()",
+        instructions: `<code>range(start, stop)</code> generates a sequence of numbers from <code>start</code> up to (but <strong>not including</strong>) <code>stop</code>.\n\nUse a <code>for</code> loop with <code>range()</code> to print the numbers <strong>1 through 5</strong>, one per line.`,
+        tip: `<code>range(1, 6)</code> produces 1, 2, 3, 4, 5 — the stop value (6) is excluded.`,
+        expected: ["1", "2", "3", "4", "5"],
+        starter: `# Print numbers 1 to 5 using range()\n`,
+        check(lines) {
+          const exp = ["1", "2", "3", "4", "5"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 3, title: "while Loop",
+        instructions: `A <code>while</code> loop keeps running as long as its condition is <code>True</code>.\n\nWrite a countdown from <strong>3 to 1</strong> using a <code>while</code> loop, then print <code>Go!</code> after the loop ends.`,
+        tip: `Set <code>i = 3</code>, loop while <code>i >= 1</code>, print <code>i</code>, then subtract 1: <code>i -= 1</code>. Without <code>i -= 1</code> the loop runs forever!`,
+        expected: ["3", "2", "1", "Go!"],
+        starter: `i = 3\n\nwhile i >= 1:\n    print(i)\n    i -= 1\n\n# Print "Go!" after the loop\n`,
+        check(lines) {
+          const exp = ["3", "2", "1", "Go!"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 4, title: "Accumulator — Sum with a Loop",
+        instructions: `A common pattern is to <strong>accumulate</strong> a result while looping: start at zero and add each item.\n\n<code>numbers = [5, 12, 7, 3, 9]</code> is given.\nUse a <code>for</code> loop to calculate the total and print it.`,
+        tip: `Create <code>total = 0</code> before the loop, then inside the loop: <code>total += n</code>.`,
+        expected: ["36"],
+        starter: `numbers = [5, 12, 7, 3, 9]\ntotal = 0\n\n# Add each number to total, then print total\n`,
+        check(lines) {
+          if (lines[0] === "36") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "36" }]);
+        }
+      },
+      {
+        id: 5, title: "break — Stop Early",
+        instructions: `<code>break</code> immediately exits the loop, even if there are items left.\n\nLoop through numbers <strong>1 to 10</strong>. Print each number, but <strong>stop</strong> (break) after printing <code>5</code>.`,
+        tip: `Put <code>print(i)</code> <em>before</em> <code>if i == 5: break</code> so the number 5 is printed before stopping.`,
+        expected: ["1", "2", "3", "4", "5"],
+        starter: `for i in range(1, 11):\n    print(i)\n    if i == 5:\n        break\n`,
+        check(lines) {
+          const exp = ["1", "2", "3", "4", "5"];
+          if (lines.length !== 5) return fail([{ got: `${lines.length} lines`, exp: "exactly 5 lines" }]);
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 6, title: "Loop with Condition — Even Numbers",
+        instructions: `Combine a <code>for</code> loop with an <code>if</code> statement to filter results.\n\nUse a <code>for</code> loop over <code>range(1, 11)</code> to print <strong>only the even numbers</strong>.`,
+        tip: `<code>if i % 2 == 0:</code> is true when <code>i</code> is even. Put <code>print(i)</code> inside this <code>if</code> block.`,
+        expected: ["2", "4", "6", "8", "10"],
+        starter: `for i in range(1, 11):\n    # only print even numbers\n    pass\n`,
+        check(lines) {
+          const exp = ["2", "4", "6", "8", "10"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: "C1", isChallenge: true, title: "⭐ Challenge 1 — Multiplication Table",
+        instructions: `<code>n = 7</code> is given.\n\nPrint the multiplication table for <code>n</code> from 1 to 5, in this exact format:\n<code>7 x 1 = 7</code>`,
+        tip: `Use <code>for i in range(1, 6):</code> and an f-string: <code>print(f"{n} x {i} = {n * i}")</code>`,
+        expected: ["7 x 1 = 7", "7 x 2 = 14", "7 x 3 = 21", "7 x 4 = 28", "7 x 5 = 35"],
+        starter: `n = 7\n\n# Print the multiplication table for n (1 to 5)\n`,
+        check(lines) {
+          const exp = ["7 x 1 = 7", "7 x 2 = 14", "7 x 3 = 21", "7 x 4 = 28", "7 x 5 = 35"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: "C2", isChallenge: true, title: "⭐ Challenge 2 — FizzBuzz",
+        instructions: `A classic programming puzzle! Loop through numbers <strong>1 to 15</strong> and print:\n<code>FizzBuzz</code> if the number is divisible by both 3 and 5\n<code>Fizz</code> if divisible by 3 only\n<code>Buzz</code> if divisible by 5 only\nOtherwise, print the number itself`,
+        tip: `Check divisibility by <em>both</em> first (<code>if n % 3 == 0 and n % 5 == 0</code>), then 3, then 5. Order matters!`,
+        expected: ["1","2","Fizz","4","Buzz","Fizz","7","8","Fizz","Buzz","11","Fizz","13","14","FizzBuzz"],
+        starter: `for n in range(1, 16):\n    # your if/elif/else here\n    pass\n`,
+        check(lines) {
+          const exp = ["1","2","Fizz","4","Buzz","Fizz","7","8","Fizz","Buzz","11","Fizz","13","14","FizzBuzz"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      }
+    ]
+  },
+
+  /* ════════════════════════════════════════════════════════
+     Session 7 — Functions
+  ════════════════════════════════════════════════════════ */
+  {
+    num: 7, title: "Functions",
+    questions: [
+      {
+        id: 1, title: "Define and Call",
+        instructions: `A <strong>function</strong> is a reusable block of code. Define it with <code>def</code>, then call it by name.\n\nDefine a function called <code>greet()</code> that prints <code>Hello from a function!</code>, then call it.`,
+        tip: `The function body must be indented. Don't forget to actually call it: <code>greet()</code> after the <code>def</code> block.`,
+        expected: ["Hello from a function!"],
+        starter: `def greet():\n    # print the message here\n    pass\n\ngreet()  # call the function\n`,
+        check(lines) {
+          if (lines[0] === "Hello from a function!") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "Hello from a function!" }]);
+        }
+      },
+      {
+        id: 2, title: "Function with a Parameter",
+        instructions: `A <strong>parameter</strong> is an input your function accepts. It acts like a variable inside the function.\n\nDefine a function <code>greet(name)</code> that prints <code>Hello, Jake!</code> (using the name that was passed in).\nCall it with <code>"Jake"</code>.`,
+        tip: `Parameters go in the parentheses: <code>def greet(name):</code>. Use the parameter like a regular variable inside the function.`,
+        expected: ["Hello, Jake!"],
+        starter: `def greet(name):\n    # print: Hello, <name>!\n    pass\n\ngreet("Jake")\n`,
+        check(lines) {
+          if (lines[0] === "Hello, Jake!") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "Hello, Jake!" }]);
+        }
+      },
+      {
+        id: 3, title: "return Value",
+        instructions: `The <code>return</code> statement sends a value <em>back</em> to whoever called the function.\n\nDefine a function <code>square(n)</code> that <strong>returns</strong> <code>n</code> squared.\nCall it with <code>8</code> and print the result.`,
+        tip: `Use <code>return</code> to send the value back — don't print inside the function. Store the result: <code>result = square(8)</code> and then <code>print(result)</code>.`,
+        expected: ["64"],
+        starter: `def square(n):\n    # return n squared\n    pass\n\nresult = square(8)\nprint(result)\n`,
+        check(lines) {
+          if (lines[0] === "64") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "64" }]);
+        }
+      },
+      {
+        id: 4, title: "Multiple Parameters",
+        instructions: `Functions can accept more than one parameter — separate them with commas.\n\nDefine a function <code>add(a, b)</code> that returns the sum of <code>a</code> and <code>b</code>.\nCall it with <code>15</code> and <code>27</code> and print the result.`,
+        tip: `When calling: <code>add(15, 27)</code> — Python matches arguments to parameters in order.`,
+        expected: ["42"],
+        starter: `def add(a, b):\n    # return a + b\n    pass\n\nprint(add(15, 27))\n`,
+        check(lines) {
+          if (lines[0] === "42") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "42" }]);
+        }
+      },
+      {
+        id: 5, title: "Default Parameter",
+        instructions: `A <strong>default parameter</strong> has a fallback value used when the caller doesn't provide one.\n\nDefine <code>power(base, exp=2)</code> that returns <code>base ** exp</code>.\nPrint two lines:\nLine 1: call <code>power(5)</code> — uses the default exponent\nLine 2: call <code>power(5, 3)</code> — overrides the default`,
+        tip: `Set a default with <code>def power(base, exp=2):</code>. Calling <code>power(5)</code> uses <code>exp=2</code> automatically.`,
+        expected: ["25", "125"],
+        starter: `def power(base, exp=2):\n    # return base ** exp\n    pass\n\nprint(power(5))\nprint(power(5, 3))\n`,
+        check(lines) {
+          const diffs = [];
+          if (lines[0] !== "25")  diffs.push({ got: lines[0] ?? "(missing)", exp: "25" });
+          if (lines[1] !== "125") diffs.push({ got: lines[1] ?? "(missing)", exp: "125" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 6, title: "Return Min and Max",
+        instructions: `A function can return <strong>two values at once</strong> by separating them with a comma.\n\nDefine <code>min_max(numbers)</code> that returns both the minimum and maximum of a list.\nCall it with <code>[4, 7, 1, 9, 3]</code> and print:\n<code>Min: 1</code> and <code>Max: 9</code>`,
+        tip: `<code>return min(numbers), max(numbers)</code> returns both. Unpack them: <code>lo, hi = min_max([...])</code>`,
+        expected: ["Min: 1", "Max: 9"],
+        starter: `def min_max(numbers):\n    # return both min and max\n    pass\n\nlo, hi = min_max([4, 7, 1, 9, 3])\nprint(f"Min: {lo}")\nprint(f"Max: {hi}")\n`,
+        check(lines) {
+          const diffs = [];
+          if (lines[0] !== "Min: 1") diffs.push({ got: lines[0] ?? "(missing)", exp: "Min: 1" });
+          if (lines[1] !== "Max: 9") diffs.push({ got: lines[1] ?? "(missing)", exp: "Max: 9" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: "C1", isChallenge: true, title: "⭐ Challenge 1 — Functions Calling Functions",
+        instructions: `Define two functions:\n1. <code>is_even(n)</code> → returns <code>True</code> if <code>n</code> is even, <code>False</code> otherwise\n2. <code>count_evens(numbers)</code> → loops through a list, calls <code>is_even()</code>, and returns the count of even numbers\n\nCall <code>count_evens([1, 2, 3, 4, 5, 6])</code> and print the result.`,
+        tip: `Inside <code>count_evens</code>, call <code>is_even(n)</code> just like any other function — functions can call other functions!`,
+        expected: ["3"],
+        starter: `def is_even(n):\n    # return True if n is even\n    pass\n\ndef count_evens(numbers):\n    count = 0\n    for n in numbers:\n        # use is_even here\n        pass\n    return count\n\nprint(count_evens([1, 2, 3, 4, 5, 6]))\n`,
+        check(lines) {
+          if (lines[0] === "3") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "3" }]);
+        }
+      },
+      {
+        id: "C2", isChallenge: true, title: "⭐ Challenge 2 — Recursive Factorial",
+        instructions: `A <strong>recursive</strong> function calls itself to solve a smaller version of the same problem.\n\nDefine <code>factorial(n)</code>:\n• Base case: if <code>n &lt;= 1</code>, return <code>1</code>\n• Recursive case: return <code>n * factorial(n - 1)</code>\n\nPrint <code>factorial(5)</code>`,
+        tip: `Base case: <code>if n <= 1: return 1</code>. Recursive case: <code>return n * factorial(n - 1)</code>. 5! = 5×4×3×2×1 = 120.`,
+        expected: ["120"],
+        starter: `def factorial(n):\n    if n <= 1:\n        return 1\n    # recursive case: return n * factorial(n - 1)\n    pass\n\nprint(factorial(5))\n`,
+        check(lines) {
+          if (lines[0] === "120") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "120" }]);
+        }
+      }
+    ]
+  },
+
+  /* ════════════════════════════════════════════════════════
+     Session 8 — Dictionaries & Tuples
+  ════════════════════════════════════════════════════════ */
+  {
+    num: 8, title: "Dictionaries & Tuples",
+    questions: [
+      {
+        id: 1, title: "Create and Access a Dictionary",
+        instructions: `A <strong>dictionary</strong> stores key-value pairs. Access a value using its key inside square brackets.\n\n<code>student = {"name": "Jake", "age": 20, "grade": "A"}</code> is given.\nPrint three lines: the student's name, age, and grade.`,
+        tip: `Access values by key: <code>student["name"]</code>. Keys are case-sensitive strings.`,
+        expected: ["Jake", "20", "A"],
+        starter: `student = {"name": "Jake", "age": 20, "grade": "A"}\n\n# Print name, age, grade\n`,
+        check(lines) {
+          const exp = ["Jake", "20", "A"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 2, title: "Add and Update Keys",
+        instructions: `You can add a new key or update an existing one using the same assignment syntax.\n\n<code>cart = {"apple": 2, "banana": 3}</code> is given.\nAdd <code>"cherry": 5</code>, then update <code>"apple"</code> to <code>4</code>.\nPrint the final dictionary.`,
+        tip: `To add: <code>cart["cherry"] = 5</code>. To update: <code>cart["apple"] = 4</code>. Same syntax — different result.`,
+        expected: ["{'apple': 4, 'banana': 3, 'cherry': 5}"],
+        starter: `cart = {"apple": 2, "banana": 3}\n\n# Add cherry:5, update apple to 4, then print\n`,
+        check(lines) {
+          if (lines[0] === "{'apple': 4, 'banana': 3, 'cherry': 5}") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "{'apple': 4, 'banana': 3, 'cherry': 5}" }]);
+        }
+      },
+      {
+        id: 3, title: "Loop over a Dictionary",
+        instructions: `<code>.items()</code> gives you each key-value pair as a tuple, so you can unpack it in a <code>for</code> loop.\n\n<code>scores = {"Alice": 90, "Bob": 85, "Charlie": 92}</code> is given.\nLoop and print each pair in this format: <code>Alice: 90</code>`,
+        tip: `Use two loop variables: <code>for name, score in scores.items():</code>. This unpacks the key and value at once.`,
+        expected: ["Alice: 90", "Bob: 85", "Charlie: 92"],
+        starter: `scores = {"Alice": 90, "Bob": 85, "Charlie": 92}\n\n# Loop and print each name: score\n`,
+        check(lines) {
+          const exp = ["Alice: 90", "Bob: 85", "Charlie: 92"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 4, title: "dict.get() — Safe Lookup",
+        instructions: `<code>.get(key, default)</code> looks up a key but returns a <strong>default value</strong> instead of crashing if the key doesn't exist.\n\n<code>profile = {"name": "Jake", "age": 20, "city": "Vancouver"}</code> is given.\nPrint two lines:\nLine 1: use <code>.get("name")</code>\nLine 2: use <code>.get("email", "no email")</code>`,
+        tip: `<code>profile["email"]</code> would crash with a <code>KeyError</code>. <code>profile.get("email", "no email")</code> safely returns <code>"no email"</code> instead.`,
+        expected: ["Jake", "no email"],
+        starter: `profile = {"name": "Jake", "age": 20, "city": "Vancouver"}\n\n# Use .get() for "name" and .get() with default for "email"\n`,
+        check(lines) {
+          const diffs = [];
+          if (lines[0] !== "Jake")     diffs.push({ got: lines[0] ?? "(missing)", exp: "Jake" });
+          if (lines[1] !== "no email") diffs.push({ got: lines[1] ?? "(missing)", exp: "no email" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 5, title: "Create and Access a Tuple",
+        instructions: `A <strong>tuple</strong> is like a list but <em>immutable</em> — you cannot change it after creation. It uses <code>()</code> instead of <code>[]</code>.\n\n<code>point = (10, 20)</code> is given.\nPrint three lines: the first element, the second element, and the length of the tuple.`,
+        tip: `Tuples use parentheses: <code>point = (10, 20)</code>. Access elements with <code>point[0]</code>, just like a list.`,
+        expected: ["10", "20", "2"],
+        starter: `point = (10, 20)\n\n# Print point[0], point[1], and len(point)\n`,
+        check(lines) {
+          const exp = ["10", "20", "2"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 6, title: "Tuple Unpacking",
+        instructions: `<strong>Unpacking</strong> assigns each element of a tuple to its own variable in one line.\n\n<code>rgb = (255, 128, 0)</code> is given.\nUnpack it into <code>r</code>, <code>g</code>, <code>b</code> and print three lines:\n<code>R: 255</code> &nbsp; <code>G: 128</code> &nbsp; <code>B: 0</code>`,
+        tip: `<code>r, g, b = (255, 128, 0)</code> assigns all three values in one line. The number of variables must match the tuple length.`,
+        expected: ["R: 255", "G: 128", "B: 0"],
+        starter: `rgb = (255, 128, 0)\n\n# Unpack into r, g, b and print each\n`,
+        check(lines) {
+          const exp = ["R: 255", "G: 128", "B: 0"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: "C1", isChallenge: true, title: "⭐ Challenge 1 — Word Counter",
+        instructions: `Use a dictionary to count how many times each word appears.\n\n<code>words = ["cat", "dog", "cat", "bird", "dog", "cat"]</code> is given.\nPrint each word and its count in this format: <code>cat: 3</code>`,
+        tip: `Use <code>.get(word, 0)</code> to safely get the current count (0 if unseen), then add 1: <code>counts[word] = counts.get(word, 0) + 1</code>`,
+        expected: ["cat: 3", "dog: 2", "bird: 1"],
+        starter: `words = ["cat", "dog", "cat", "bird", "dog", "cat"]\ncounts = {}\n\n# Count each word, then print word: count\n`,
+        check(lines) {
+          const exp = ["cat: 3", "dog: 2", "bird: 1"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: "C2", isChallenge: true, title: "⭐ Challenge 2 — Nested Dictionary",
+        instructions: `A dictionary's values can themselves be dictionaries — this is called a <strong>nested dict</strong>.\n\n<code>students = {"Alice": {"grade": "A", "score": 95}, "Bob": {"grade": "B", "score": 82}}</code> is given.\n\nLoop through and print each student like:\n<code>Alice — Grade: A, Score: 95</code>`,
+        tip: `Access nested values by chaining keys: <code>students["Alice"]["grade"]</code>. Loop with <code>for name, info in students.items():</code>`,
+        expected: ["Alice — Grade: A, Score: 95", "Bob — Grade: B, Score: 82"],
+        starter: `students = {\n    "Alice": {"grade": "A", "score": 95},\n    "Bob":   {"grade": "B", "score": 82}\n}\n\n# Loop and print each student's info\n`,
+        check(lines) {
+          const exp = ["Alice — Grade: A, Score: 95", "Bob — Grade: B, Score: 82"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      }
+    ]
+  },
+
+  /* ════════════════════════════════════════════════════════
+     Session 9 — Error Handling
+  ════════════════════════════════════════════════════════ */
+  {
+    num: 9, title: "Error Handling",
+    questions: [
+      {
+        id: 1, title: "Basic try / except",
+        instructions: `A <code>try</code> block lets you <em>attempt</em> code that might fail. The <code>except</code> block runs if an error occurs — the program doesn't crash.\n\nTry to convert the string <code>"hello"</code> to an integer.\nCatch the <code>ValueError</code> and print <code>Cannot convert to int</code>.`,
+        tip: `Wrap the risky code: <code>try: int("hello")</code>. Catch it: <code>except ValueError: print(...)</code>`,
+        expected: ["Cannot convert to int"],
+        starter: `try:\n    num = int("hello")\nexcept ValueError:\n    # print the error message\n    pass\n`,
+        check(lines) {
+          if (lines[0] === "Cannot convert to int") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "Cannot convert to int" }]);
+        }
+      },
+      {
+        id: 2, title: "ZeroDivisionError",
+        instructions: `Dividing by zero causes a <code>ZeroDivisionError</code>. Catch it to handle it gracefully.\n\nTry to divide <code>10</code> by <code>0</code>.\nCatch the error and print <code>Cannot divide by zero</code>.`,
+        tip: `<code>ZeroDivisionError</code> is the exception type Python raises when dividing by zero — write it exactly as shown.`,
+        expected: ["Cannot divide by zero"],
+        starter: `try:\n    result = 10 / 0\nexcept ZeroDivisionError:\n    # print the error message\n    pass\n`,
+        check(lines) {
+          if (lines[0] === "Cannot divide by zero") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "Cannot divide by zero" }]);
+        }
+      },
+      {
+        id: 3, title: "try / except / finally",
+        instructions: `The <code>finally</code> block <strong>always runs</strong> — whether an error happened or not. It's used for clean-up code.\n\n<code>my_list = [1, 2, 3]</code> is given. Try to access <code>my_list[10]</code>.\nCatch the <code>IndexError</code> and print <code>Index out of range</code>.\nIn the <code>finally</code> block, print <code>Done checking</code>.`,
+        tip: `The <code>finally</code> block ALWAYS runs — whether an error happened or not. Put clean-up code there.`,
+        expected: ["Index out of range", "Done checking"],
+        starter: `my_list = [1, 2, 3]\n\ntry:\n    print(my_list[10])\nexcept IndexError:\n    # print "Index out of range"\n    pass\nfinally:\n    # print "Done checking"\n    pass\n`,
+        check(lines) {
+          const diffs = [];
+          if (lines[0] !== "Index out of range") diffs.push({ got: lines[0] ?? "(missing)", exp: "Index out of range" });
+          if (lines[1] !== "Done checking")      diffs.push({ got: lines[1] ?? "(missing)", exp: "Done checking" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 4, title: "Catch with as e",
+        instructions: `Using <code>except ValueError as e:</code> captures the exception <em>object</em>. Printing <code>e</code> shows its message.\n\nTry to run <code>int("abc")</code>.\nCatch the <code>ValueError</code> as <code>e</code> and print <code>e</code> directly.`,
+        tip: `<code>except ValueError as e:</code> captures the exception object. <code>print(e)</code> shows its message text.`,
+        expected: ["invalid literal for int() with base 10: 'abc'"],
+        starter: `try:\n    int("abc")\nexcept ValueError as e:\n    print(e)\n`,
+        check(lines) {
+          if (lines[0] === "invalid literal for int() with base 10: 'abc'") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "invalid literal for int() with base 10: 'abc'" }]);
+        }
+      },
+      {
+        id: 5, title: "raise — Throw Your Own Error",
+        instructions: `You can throw your own errors using <code>raise</code>. This is how you enforce rules in your functions.\n\nDefine a function <code>check_age(age)</code> that raises a <code>ValueError</code> with the message <code>Age cannot be negative</code> if <code>age &lt; 0</code>.\n\nCall <code>check_age(-5)</code> inside a <code>try/except</code> and print the error message.`,
+        tip: `<code>raise ValueError("Age cannot be negative")</code> immediately stops the function. Catch it outside: <code>try: check_age(-5) \\nexcept ValueError as e: print(e)</code>`,
+        expected: ["Age cannot be negative"],
+        starter: `def check_age(age):\n    if age < 0:\n        raise ValueError("Age cannot be negative")\n\ntry:\n    check_age(-5)\nexcept ValueError as e:\n    print(e)\n`,
+        check(lines) {
+          if (lines[0] === "Age cannot be negative") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "Age cannot be negative" }]);
+        }
+      },
+      {
+        id: 6, title: "try / except / else",
+        instructions: `The <code>else</code> block runs <strong>only if no exception was raised</strong> — it's the "success" path.\n\nTry to convert <code>"42"</code> to an int.\nIf it works (the <code>else</code> branch), print <code>Success: 42</code>.\nIf a <code>ValueError</code> occurs, print <code>Not a number!</code>`,
+        tip: `The <code>else</code> block only runs if NO exception was raised. Use <code>num</code> (the converted value) inside <code>else</code>.`,
+        expected: ["Success: 42"],
+        starter: `try:\n    num = int("42")\nexcept ValueError:\n    print("Not a number!")\nelse:\n    # only runs if no error — print "Success: <num>"\n    pass\n`,
+        check(lines) {
+          if (lines[0] === "Success: 42") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "Success: 42" }]);
+        }
+      },
+      {
+        id: "C1", isChallenge: true, title: "⭐ Challenge 1 — Safe Divide",
+        instructions: `Define a function <code>safe_divide(a, b)</code> that:\n• Returns <code>a / b</code> normally\n• Returns the string <code>Error: division by zero</code> if <code>b</code> is <code>0</code>\n\nPrint the results of:\n<code>safe_divide(10, 2)</code> → <code>5.0</code>\n<code>safe_divide(10, 0)</code> → <code>Error: division by zero</code>`,
+        tip: `Wrap the division inside the function: <code>try: return a / b \\nexcept ZeroDivisionError: return "Error: division by zero"</code>`,
+        expected: ["5.0", "Error: division by zero"],
+        starter: `def safe_divide(a, b):\n    # try to return a/b, catch ZeroDivisionError\n    pass\n\nprint(safe_divide(10, 2))\nprint(safe_divide(10, 0))\n`,
+        check(lines) {
+          const diffs = [];
+          if (lines[0] !== "5.0")                    diffs.push({ got: lines[0] ?? "(missing)", exp: "5.0" });
+          if (lines[1] !== "Error: division by zero") diffs.push({ got: lines[1] ?? "(missing)", exp: "Error: division by zero" });
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: "C2", isChallenge: true, title: "⭐ Challenge 2 — Input Validator",
+        instructions: `<code>user_inputs = ["25", "abc", "0", "30"]</code> is given.\n\nLoop through and try to convert each to an integer:\n• If valid and <code>&gt; 0</code>: print <code>Valid: 25</code>\n• If valid but <code>&lt;= 0</code>: print <code>Invalid: must be positive</code>\n• If not a number: print <code>Invalid: not a number</code>`,
+        tip: `Convert inside the <code>try</code> block. Then check if the number is positive in the <code>else</code> block (no exception = conversion succeeded).`,
+        expected: ["Valid: 25", "Invalid: not a number", "Invalid: must be positive", "Valid: 30"],
+        starter: `user_inputs = ["25", "abc", "0", "30"]\n\nfor item in user_inputs:\n    try:\n        n = int(item)\n    except ValueError:\n        # not a number\n        pass\n    else:\n        # check if n > 0\n        pass\n`,
+        check(lines) {
+          const exp = ["Valid: 25", "Invalid: not a number", "Invalid: must be positive", "Valid: 30"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      }
+    ]
+  },
+
+  /* ════════════════════════════════════════════════════════
+     Session 10 — Putting It All Together
+  ════════════════════════════════════════════════════════ */
+  {
+    num: 10, title: "Putting It All Together",
+    questions: [
+      {
+        id: 1, title: "Grade Calculator",
+        instructions: `Combine <strong>functions</strong> and <strong>loops</strong>.\n\nDefine a function <code>letter_grade(score)</code> that returns <code>A</code>, <code>B</code>, <code>C</code>, <code>D</code>, or <code>F</code>.\n\n<code>scores = [85, 92, 78, 95, 60]</code> is given.\nLoop through the scores and print each student's grade on its own line.`,
+        tip: `Define <code>letter_grade()</code> first, then loop through <code>scores</code> calling it. <code>print(letter_grade(score))</code>`,
+        expected: ["B", "A", "C", "A", "D"],
+        starter: `def letter_grade(score):\n    # return A/B/C/D/F based on score\n    pass\n\nscores = [85, 92, 78, 95, 60]\nfor score in scores:\n    print(letter_grade(score))\n`,
+        check(lines) {
+          const exp = ["B", "A", "C", "A", "D"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 2, title: "Filter Evens with a Function",
+        instructions: `Combine <strong>functions</strong>, <strong>loops</strong>, and <strong>lists</strong>.\n\nDefine a function <code>filter_evens(numbers)</code> that returns a <strong>new list</strong> containing only the even numbers.\n\nCall it with <code>[1, 2, 3, 4, 5, 6, 7, 8]</code> and print the result.`,
+        tip: `Create an empty list <code>result = []</code> before the loop, append matching numbers, then <code>return result</code> at the end.`,
+        expected: ["[2, 4, 6, 8]"],
+        starter: `def filter_evens(numbers):\n    result = []\n    for n in numbers:\n        # append n if it's even\n        pass\n    return result\n\nprint(filter_evens([1, 2, 3, 4, 5, 6, 7, 8]))\n`,
+        check(lines) {
+          if (lines[0] === "[2, 4, 6, 8]") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "[2, 4, 6, 8]" }]);
+        }
+      },
+      {
+        id: 3, title: "In-Stock Inventory",
+        instructions: `Combine <strong>dictionaries</strong> and <strong>loops</strong>.\n\n<code>inventory = {"apple": 5, "banana": 0, "cherry": 3, "mango": 0}</code> is given.\n\nLoop through the inventory and print only the items that are <strong>in stock</strong> (count > 0) in this format: <code>apple: 5</code>`,
+        tip: `Loop over <code>inventory.items()</code> and use <code>if count > 0:</code> to skip out-of-stock items.`,
+        expected: ["apple: 5", "cherry: 3"],
+        starter: `inventory = {"apple": 5, "banana": 0, "cherry": 3, "mango": 0}\n\n# Print only items with count > 0\n`,
+        check(lines) {
+          const exp = ["apple: 5", "cherry: 3"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: 4, title: "Long Words Filter",
+        instructions: `Combine <strong>strings</strong>, <strong>lists</strong>, and <strong>loops</strong>.\n\n<code>sentence = "Python is a great programming language for beginners"</code> is given.\n\nSplit it into words, then build a list of words with more than 4 letters, and print the result.`,
+        tip: `<code>sentence.split()</code> splits on spaces. Then loop and check <code>len(word) > 4</code>.`,
+        expected: ["['Python', 'great', 'programming', 'language', 'beginners']"],
+        starter: `sentence = "Python is a great programming language for beginners"\nwords = sentence.split()\n\nlong_words = []\nfor word in words:\n    # append word if len > 4\n    pass\n\nprint(long_words)\n`,
+        check(lines) {
+          if (lines[0] === "['Python', 'great', 'programming', 'language', 'beginners']") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "['Python', 'great', 'programming', 'language', 'beginners']" }]);
+        }
+      },
+      {
+        id: 5, title: "Top Student",
+        instructions: `Combine <strong>tuples</strong>, <strong>lists</strong>, and <strong>loops</strong>.\n\n<code>students = [("Alice", 92), ("Bob", 85), ("Diana", 96), ("Charlie", 78)]</code> is given.\n\nFind the student with the highest score and print:\n<code>Top student: Diana with 96</code>`,
+        tip: `Track the best seen so far: start with the first student, then loop and update <code>best_name, best_score</code> when you find a higher score.`,
+        expected: ["Top student: Diana with 96"],
+        starter: `students = [("Alice", 92), ("Bob", 85), ("Diana", 96), ("Charlie", 78)]\n\nbest_name  = students[0][0]\nbest_score = students[0][1]\n\nfor name, score in students:\n    if score > best_score:\n        # update best_name and best_score\n        pass\n\nprint(f"Top student: {best_name} with {best_score}")\n`,
+        check(lines) {
+          if (lines[0] === "Top student: Diana with 96") return ok();
+          return fail([{ got: lines[0] ?? "(nothing)", exp: "Top student: Diana with 96" }]);
+        }
+      },
+      {
+        id: 6, title: "Error-Safe Calculator",
+        instructions: `Combine <strong>loops</strong>, <strong>tuples</strong>, and <strong>error handling</strong>.\n\n<code>operations = [(10, "+", 5), (8, "-", 3), (6, "*", 7), (9, "/", 0)]</code> is given.\n\nFor each operation, try to perform it and print the result. Handle division by zero gracefully:\n<code>10 + 5 = 15</code> &nbsp; or &nbsp; <code>Error: 9 / 0</code>`,
+        tip: `Wrap the calculation in a <code>try</code> block inside the loop. If <code>ZeroDivisionError</code> occurs, print the error format.`,
+        expected: ["10 + 5 = 15", "8 - 3 = 5", "6 * 7 = 42", "Error: 9 / 0"],
+        starter: `operations = [(10, "+", 5), (8, "-", 3), (6, "*", 7), (9, "/", 0)]\n\nfor a, op, b in operations:\n    try:\n        if op == "+":  result = a + b\n        elif op == "-": result = a - b\n        elif op == "*": result = a * b\n        elif op == "/": result = a / b\n        print(f"{a} {op} {b} = {result}")\n    except ZeroDivisionError:\n        # print "Error: a / b"\n        pass\n`,
+        check(lines) {
+          const exp = ["10 + 5 = 15", "8 - 3 = 5", "6 * 7 = 42", "Error: 9 / 0"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: "C1", isChallenge: true, title: "⭐ Challenge 1 — Word Frequency",
+        instructions: `Combine <strong>strings</strong>, <strong>loops</strong>, and <strong>dictionaries</strong>.\n\n<code>text = "apple banana apple cherry banana apple"</code> is given.\n\nCount how many times each word appears, then print the results in <strong>alphabetical order</strong>:\n<code>apple: 3</code>`,
+        tip: `Use <code>text.split()</code> to get words. Use <code>.get(word, 0) + 1</code> to count. Use <code>sorted(counts)</code> to loop alphabetically.`,
+        expected: ["apple: 3", "banana: 2", "cherry: 1"],
+        starter: `text = "apple banana apple cherry banana apple"\nwords = text.split()\ncounts = {}\n\nfor word in words:\n    counts[word] = counts.get(word, 0) + 1\n\n# Print in alphabetical order\n`,
+        check(lines) {
+          const exp = ["apple: 3", "banana: 2", "cherry: 1"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      },
+      {
+        id: "C2", isChallenge: true, title: "⭐ Challenge 2 — Report Card",
+        instructions: `Combine <strong>dictionaries</strong>, <strong>functions</strong>, and <strong>loops</strong>.\n\n<code>students = {"Alice": [90, 85, 92], "Bob": [78, 82, 80], "Charlie": [95, 98, 92]}</code> is given.\n\nFor each student, calculate their average score and letter grade, then print:\n<code>Alice: 89.0 — B</code>`,
+        tip: `Define a <code>letter_grade(avg)</code> helper first. Then loop with <code>students.items()</code>, compute <code>sum(scores) / len(scores)</code>, and call your function.`,
+        expected: ["Alice: 89.0 — B", "Bob: 80.0 — B", "Charlie: 95.0 — A"],
+        starter: `students = {\n    "Alice":   [90, 85, 92],\n    "Bob":     [78, 82, 80],\n    "Charlie": [95, 98, 92]\n}\n\ndef letter_grade(avg):\n    # return A/B/C/D/F\n    pass\n\nfor name, scores in students.items():\n    avg = sum(scores) / len(scores)\n    grade = letter_grade(avg)\n    print(f"{name}: {avg} — {grade}")\n`,
+        check(lines) {
+          const exp = ["Alice: 89.0 — B", "Bob: 80.0 — B", "Charlie: 95.0 — A"];
+          const diffs = exp.map((e,i) => lines[i] !== e ? { got: lines[i] ?? "(missing)", exp: e } : null).filter(Boolean);
+          return diffs.length === 0 ? ok() : fail(diffs);
+        }
+      }
+    ]
+  }
+
+]; // end SESSIONS
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function ok(msg = "All lines match!") { return { pass: true, msg }; }
+function fail(diffs) { return { pass: false, diffs }; }
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// ── State ────────────────────────────────────────────────────────────────────
+let pyodide = null;
+const editors = {};
+const passed  = Array.from({ length: 10 }, () => new Set());
+let currentTab = 0;
+const editorReady = Array(10).fill(false);
+
+// ── Build HTML structure (all sessions, no CodeMirror yet) ───────────────────
+function buildUI() {
+  const main = document.getElementById('main');
+  SESSIONS.forEach((session, sidx) => {
+    const panel = document.createElement('div');
+    panel.className = 'session-panel';
+    panel.id = `panel-${sidx}`;
+    panel.style.display = sidx === 0 ? 'flex' : 'none';
+
+    session.questions.forEach((q, idx) => {
+      const ekey = `s${sidx}-${q.id}`;
+      const expHtml = q.expected.map(l => `<div>${escHtml(l)}</div>`).join('');
+      const tipHtml = q.tip ? `<div class="tip-box">💡 ${q.tip}</div>` : '';
+      const card = document.createElement('div');
+      card.className = 'card' + (q.isChallenge ? ' challenge' : '');
+      card.id = `card-${ekey}`;
+      card.innerHTML = `
+        <div class="card-header">
+          <div class="qnum">${q.id}</div>
+          <h2>${q.title}</h2>
+          <div class="status-dot" id="dot-${ekey}"></div>
+        </div>
+        <div class="card-body">
+          <p class="instructions">${q.instructions.replace(/\n/g,'<br>')}</p>
+          ${tipHtml}
+          <div class="expected-box">
+            <div class="label">Expected output</div>
+            <div id="exp-${ekey}">${expHtml}</div>
+          </div>
+          <textarea id="editor-${ekey}">${q.starter}</textarea>
+          <div class="btn-row">
+            <button class="btn btn-run"   onclick="runCode(${sidx},'${q.id}')">▶  Run</button>
+            <button class="btn btn-check" onclick="checkCode(${sidx},'${q.id}')">✓  Check</button>
+            <button class="btn btn-reset" onclick="resetCode(${sidx},'${q.id}')">Reset</button>
+          </div>
+          <div class="output-panel" id="out-${ekey}">
+            <div class="output-label">
+              <span>Output</span>
+              <span id="out-time-${ekey}" style="color:#44475a"></span>
+            </div>
+            <div class="output-text" id="out-text-${ekey}"></div>
+          </div>
+          <div class="result-panel" id="res-${ekey}"></div>
+        </div>`;
+      panel.appendChild(card);
+    });
+    main.appendChild(panel);
+  });
+}
+
+// ── Lazy CodeMirror init ─────────────────────────────────────────────────────
+function initEditors(sidx) {
+  if (editorReady[sidx]) return;
+  editorReady[sidx] = true;
+  SESSIONS[sidx].questions.forEach(q => {
+    const ekey = `s${sidx}-${q.id}`;
+    const ta = document.getElementById(`editor-${ekey}`);
+    if (ta) {
+      editors[ekey] = CodeMirror.fromTextArea(ta, {
+        mode: 'python', theme: 'dracula', lineNumbers: true,
+        indentUnit: 4, tabSize: 4, indentWithTabs: false,
+        extraKeys: { Tab: cm => cm.execCommand('indentMore') }
+      });
+    }
+  });
+}
+
+// ── Tab switching ────────────────────────────────────────────────────────────
+function switchTab(sidx) {
+  document.querySelectorAll('.tab-btn').forEach((btn, i) =>
+    btn.classList.toggle('active', i === sidx));
+  document.querySelectorAll('.session-panel').forEach((panel, i) =>
+    panel.style.display = i === sidx ? 'flex' : 'none');
+  currentTab = sidx;
+  const s = SESSIONS[sidx];
+  document.getElementById('session-num').textContent = s.num;
+  document.getElementById('session-sub').textContent = s.title;
+  document.getElementById('session-badge').textContent = `${s.questions.length} questions`;
+  updateProgress(sidx);
+  initEditors(sidx);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Pyodide execution ────────────────────────────────────────────────────────
+async function runPython(code) {
+  const result = await pyodide.runPythonAsync(`
+import sys, io, traceback
+_buf = io.StringIO()
+_err = None
+try:
+    sys.stdout = _buf
+    exec(${JSON.stringify(code)})
+except Exception as e:
+    _err = traceback.format_exc()
+finally:
+    sys.stdout = sys.__stdout__
+(_buf.getvalue(), _err)
+`);
+  const [output, err] = result.toJs();
+  return { output: output || '', error: err || null };
+}
+
+// ── Run ──────────────────────────────────────────────────────────────────────
+async function runCode(sidx, qid) {
+  if (!pyodide) return alert('Python is still loading — please wait.');
+  const ekey = `s${sidx}-${qid}`;
+  const code = editors[ekey].getValue();
+  const t0 = performance.now();
+  const { output, error } = await runPython(code);
+  const ms = (performance.now() - t0).toFixed(0);
+  const panel = document.getElementById(`out-${ekey}`);
+  const text  = document.getElementById(`out-text-${ekey}`);
+  panel.classList.add('visible');
+  document.getElementById(`out-time-${ekey}`).textContent = `${ms}ms`;
+  if (error) { text.className = 'output-text error'; text.textContent = error; }
+  else       { text.className = 'output-text';       text.textContent = output || '(no output)'; }
+}
+
+// ── Check ────────────────────────────────────────────────────────────────────
+async function checkCode(sidx, qid) {
+  if (!pyodide) return alert('Python is still loading — please wait.');
+  const ekey = `s${sidx}-${qid}`;
+  const code = editors[ekey].getValue();
+  const { output, error } = await runPython(code);
+  const panel = document.getElementById(`out-${ekey}`);
+  const text  = document.getElementById(`out-text-${ekey}`);
+  panel.classList.add('visible');
+  if (error) { text.className = 'output-text error'; text.textContent = error; }
+  else       { text.className = 'output-text';       text.textContent = output || '(no output)'; }
+  if (error) { showResult(ekey, false, null, 'Fix the error above first, then check again.'); return; }
+  const lines = output.trimEnd().split('\n');
+  const q = SESSIONS[sidx].questions.find(q => String(q.id) === String(qid));
+  const result = q.check(lines);
+  document.getElementById(`dot-${ekey}`).className = 'status-dot ' + (result.pass ? 'pass' : 'fail');
+  if (result.pass) passed[sidx].add(String(qid));
+  else             passed[sidx].delete(String(qid));
+  updateProgress(sidx);
+  showResult(ekey, result.pass, result.diffs, result.msg);
+}
+
+// ── Reset ────────────────────────────────────────────────────────────────────
+function resetCode(sidx, qid) {
+  const ekey = `s${sidx}-${qid}`;
+  const q = SESSIONS[sidx].questions.find(q => String(q.id) === String(qid));
+  editors[ekey].setValue(q.starter);
+  document.getElementById(`out-${ekey}`).classList.remove('visible');
+  document.getElementById(`res-${ekey}`).className = 'result-panel';
+  document.getElementById(`dot-${ekey}`).className = 'status-dot';
+  passed[sidx].delete(String(qid));
+  updateProgress(sidx);
+}
+
+// ── Progress ─────────────────────────────────────────────────────────────────
+function updateProgress(sidx) {
+  const total = SESSIONS[sidx].questions.length;
+  const n = passed[sidx].size;
+  document.getElementById('progressFill').style.width = `${(n / total) * 100}%`;
+  document.getElementById('progressLabel').textContent = `${n} / ${total}`;
+  const btn = document.getElementById(`tab-btn-${sidx}`);
+  if (n === total && total > 0) btn.classList.add('done');
+  else btn.classList.remove('done');
+}
+
+// ── Result panel ──────────────────────────────────────────────────────────────
+function showResult(ekey, pass, diffs, msg) {
+  const panel = document.getElementById(`res-${ekey}`);
+  panel.className = 'result-panel visible ' + (pass ? 'pass' : 'fail');
+  if (pass) {
+    panel.innerHTML = `<div class="result-title">✅ Passed!</div><div>${msg || 'Your output matches perfectly.'}</div>`;
+  } else {
+    let html = `<div class="result-title">❌ Not quite — check the diff below</div>`;
+    if (msg) html += `<div>${msg}</div>`;
+    if (diffs) diffs.forEach(d => {
+      html += `<div class="diff-row">
+        Got:      <span class="diff-got">${escHtml(d.got)}</span><br>
+        Expected: <span class="diff-expected">${escHtml(d.exp)}</span>
+      </div>`;
+    });
+    panel.innerHTML = html;
+  }
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+buildUI();
+initEditors(0);
+
+(async () => {
+  pyodide = await loadPyodide();
+  const ov = document.getElementById('loading');
+  ov.style.opacity = '0';
+  setTimeout(() => ov.style.display = 'none', 500);
+})();
+</script>
+</body>
+</html>
